@@ -39,10 +39,7 @@ jobs:
             -e "s|__RELATIONAL_DATABASE_HOST__|${{ secrets.RELATIONAL_DATABASE_HOST }}|g" \
             -e "s|__RELATIONAL_DATABASE_USERNAME__|${{ secrets.RELATIONAL_DATABASE_USERNAME }}|g" \
             -e "s|__RELATIONAL_DATABASE_PASSWORD__|${{ secrets.RELATIONAL_DATABASE_PASSWORD }}|g" \
-            -e "s|__RELATIONAL_DATABASE_NAME__|${{ secrets.RELATIONAL_DATABASE_NAME }}|g" .env.remote
-
-      - name: Copy .env file
-        run: scp .env.remote admin@${{ secrets.DEPLOYMENT_HOST }}:~/services/elementerra-index/.env
+            -e "s|__RELATIONAL_DATABASE_NAME__|${{ secrets.RELATIONAL_DATABASE_NAME }}|g" pull_and_deploy.sh
 
       - name: Trigger deployment on host
         run: ssh admin@${{ secrets.DEPLOYMENT_HOST }} 'bash -s' < pull_and_deploy.sh
