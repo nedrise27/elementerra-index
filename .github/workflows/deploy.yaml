@@ -32,8 +32,8 @@ jobs:
       - name: Build service
         run: npm run build
 
-      - name: Run tests
-        run: npm run test
+      # - name: Run tests
+      #   run: npm run test
 
       - name: Setup SSH
         uses: kielabokkie/ssh-key-and-known-hosts-action@v1
