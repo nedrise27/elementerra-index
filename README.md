@@ -1,5 +1,4 @@
-# elementerra-index
-
+# elementerra-history
 
 ## index attempt of Elementerra forging data
 
@@ -12,9 +11,9 @@ Happy crafting!
 
 ## Assertions about how the game works:
 
-if elementerra program gets
-called with data "J1gU5gpUd3E" => ClaimPendingGuess
+if elementerra program gets called with data "J1gU5gpUd3E" => ClaimPendingGuess
+if elementerra program gets called with data starting with "FTDA" => AddToPendingGuess
 
 If any tokenTransfer where
-toUserAccount == feePayer => successful
-else unsuccessful
+  toUserAccount == feePayer => successful
+  else unsuccessful
