@@ -1,0 +1,56 @@
+name: Deploy Service
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    env:
+      ELEMENTERRA_ACTIONS_SSH_KEY: '${{ secrets.ELEMENTERRA_ACTIONS_SSH_KEY }}'
+      DEPLOYMENT_HOST: '${{ secrets.DEPLOYMENT_HOST }}'
+      RELATIONAL_DATABASE_HOST: '${{ secrets.RELATIONAL_DATABASE_HOST }}'
+      RELATIONAL_DATABASE_USERNAME: '${{ secrets.RELATIONAL_DATABASE_USERNAME }}'
+      RELATIONAL_DATABASE_PASSWORD: '${{ secrets.RELATIONAL_DATABASE_PASSWORD }}'
+      RELATIONAL_DATABASE_NAME: '${{ secrets.RELATIONAL_DATABASE_NAME }}'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build service
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Setup SSH
+        uses: kielabokkie/ssh-key-and-known-hosts-action@v1
+        with:
+          ssh-private-key: $ELEMENTERRA_ACTIONS_SSH_KEY
+          ssh-host: $DEPLOYMENT_HOST
+
+      - name: Fill .env file with secrets
+        run: |
+          sed -i \
+            -e "s|__RELATIONAL_DATABASE_HOST__|$RELATIONAL_DATABASE_HOST|g" \
+            -e "s|__RELATIONAL_DATABASE_USERNAME__|$RELATIONAL_DATABASE_USERNAME|g" \
+            -e "s|__RELATIONAL_DATABASE_PASSWORD__|$RELATIONAL_DATABASE_PASSWORD|g" \
+            -e "s|__RELATIONAL_DATABASE_NAME__|$RELATIONAL_DATABASE_NAME|g" .env.remote
+
+      - name: Copy .env file
+        run: scp .env.remote admin@$DEPLOYMENT_HOST:~/services/elementerra-index/.env
+
+      - name: Trigger deployment on host
+        run: ssh admin@$DEPLOYMENT_HOST 'bash -s' < pull_and_deploy.sh

@@ -5,6 +5,7 @@
 # Environment
 .env
 config/config.json
+.notes
 
 # Logs
 logs
