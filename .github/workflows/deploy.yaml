@@ -29,10 +29,9 @@ jobs:
       #   run: npm run test
 
       - name: Setup SSH
-        uses: kielabokkie/ssh-key-and-known-hosts-action@v1
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.ELEMENTERRA_ACTIONS_SSH_KEY }}
-          ssh-host: ${{ secrets.DEPLOYMENT_HOST }}
 
       - name: Fill .env file with secrets
         run: |
