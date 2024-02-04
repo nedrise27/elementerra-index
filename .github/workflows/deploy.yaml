@@ -4,13 +4,6 @@ on:
   push:
     branches: ['main']
   workflow_dispatch:
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: 'pages'
-  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -29,12 +22,6 @@ jobs:
           echo "$SSH_KEY" > ~/.ssh/id_ed 
           chmod 600 ~/.ssh/id_ed
           cat >>~/.ssh/config <<END
-          Host deployment-host
-            HostName $DEPLOYMENT_HOST
-            User $SSH_USER      
-            IdentityFile ~/.ssh/id_ed
-            StrictHostKeyChecking no
-          END
 
       - name: Fill update deployment script with secrets
         run: |
@@ -50,4 +37,4 @@ jobs:
             pull_and_deploy.sh
 
       - name: Trigger deployment on host
-        run: ssh deployment-host 'bash -s' < pull_and_deploy.sh
+        run: ssh -i ~/.ssh/id_ed -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_HOST deployment-host 'bash -s' < pull_and_deploy.sh
