@@ -36,4 +36,4 @@ jobs:
             pull_and_deploy.sh
 
       - name: Trigger deployment on host
-        run: ssh -i ~/.ssh/id_ed -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_HOST deployment-host 'bash -s' < pull_and_deploy.sh
+        run: ssh -i ~/.ssh/id_ed -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_HOST 'bash -s' < pull_and_deploy.sh
