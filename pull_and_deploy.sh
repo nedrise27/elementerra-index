@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
+set -e pipefail
+
 cd ~/services/elementerra-index
 git pull
+npm ci
 npm run build
 RELATIONAL_DATABASE_HOST='__RELATIONAL_DATABASE_HOST__' \
   RELATIONAL_DATABASE_PORT='5432' \
