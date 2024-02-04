@@ -19,6 +19,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Temp save ssh key
+        run: echo "${{ secrets.ELEMENTERRA_ACTIONS_SSH_KEY }}" > ./id_ed
+
       - name: Fill update deployment script with secrets
         run: |
           sed -i \
@@ -33,4 +36,7 @@ jobs:
             pull_and_deploy.sh
 
       - name: Trigger deployment on host
-        run: ssh -o StrictHostKeyChecking=no admin@${{ secrets.DEPLOYMENT_HOST }} 'bash -s' < pull_and_deploy.sh
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            -i ./id_ed admin@${{ secrets.DEPLOYMENT_HOST }} \
+            admin@${{ secrets.DEPLOYMENT_HOST }} 'bash -s' < pull_and_deploy.sh
