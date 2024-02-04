@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import { HeliusWebhookTransactionItem } from './dto/HeliusWebhookTransactionItem';
+import { ParsedTransaction } from './dto/ParsedTransaction';
 
 @Controller()
 export class AppController {
@@ -13,7 +13,7 @@ export class AppController {
 
   @Post('helius-webhook')
   async handleElementerraProgramTransaction(
-    @Body() transactionHistory: HeliusWebhookTransactionItem[],
+    @Body() transactionHistory: ParsedTransaction[],
   ) {
     this.appService.saveProgramTransactionHistory(transactionHistory);
   }

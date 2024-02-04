@@ -8,5 +8,6 @@ import { ForgeAttemptsController } from 'src/forgeAttempts.controller';
   imports: [SequelizeModule.forFeature([ForgeAttempt])],
   providers: [ForgeAttemptsService],
   controllers: [ForgeAttemptsController],
+  exports: [ForgeAttemptsService],
 })
 export class ForgeAttemptsModule {}

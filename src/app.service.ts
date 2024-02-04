@@ -1,11 +1,13 @@
-import { Get, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { Injectable } from '@nestjs/common';
 import { InjectModel as InjectObjectModel } from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/sequelize';
 
+import * as _ from 'lodash';
+import { Model } from 'mongoose';
+import { ParsedTransaction } from './dto/ParsedTransaction';
+import { ForgeAttemptsService } from './forgeAttempts.service';
 import { Element, ForgeAttempt } from './models';
 import { TransactionHistory } from './schemas/ProgramTransactionHistory.schema';
-import { Model } from 'mongoose';
-import { HeliusWebhookTransactionItem } from './dto/HeliusWebhookTransactionItem';
 
 @Injectable()
 export class AppService {
@@ -16,9 +18,10 @@ export class AppService {
     private readonly elementModel: typeof Element,
     @InjectObjectModel(TransactionHistory.name)
     private readonly transactionHistoryModel: Model<TransactionHistory>,
+    private readonly forgeAttemptsService: ForgeAttemptsService,
   ) {}
 
-  async stats() {
+  public async stats() {
     const forgeAttemptCount = await this.forgeAttemptModel.count();
     const successfulForgeAttemptsCount = await this.forgeAttemptModel.count({
       where: {
@@ -35,19 +38,31 @@ export class AppService {
     };
   }
 
-  async saveProgramTransactionHistory(
-    transactionHistory: HeliusWebhookTransactionItem[],
+  public async saveProgramTransactionHistory(
+    transactionHistory: ParsedTransaction[] | ParsedTransaction,
   ) {
-    for (const data of transactionHistory) {
-      const t = new this.transactionHistoryModel({
-        tx: data.signature,
-        timestamp: data.timestamp,
-        slot: data.slot,
-        data,
-      });
-      t.save();
+    if (_.isArray(transactionHistory)) {
+      for (const parsedTransaction of transactionHistory) {
+        this.handleTransaction(parsedTransaction);
+      }
+      return;
     }
 
+    this.handleTransaction(transactionHistory);
     return;
+  }
+
+  private async handleTransaction(
+    parsedTransaction: ParsedTransaction,
+  ): Promise<void> {
+    const t = new this.transactionHistoryModel({
+      tx: parsedTransaction.signature,
+      timestamp: parsedTransaction.timestamp,
+      slot: parsedTransaction.slot,
+      parsedTransaction,
+    });
+    t.save();
+
+    this.forgeAttemptsService.processTransaction(parsedTransaction);
   }
 }
