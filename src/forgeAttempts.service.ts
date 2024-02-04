@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ForgeAttempt, Element } from './models';
 import { Order } from 'sequelize';
@@ -25,7 +25,9 @@ export class ForgeAttemptsService {
 
     const tx = transaction.signature;
     if (_.isNil(tx)) {
-      throw new Error('Could not get signature from transaction');
+      throw new InternalServerErrorException(
+        'Could not get signature from transaction',
+      );
     }
 
     const elementerra_instruction = transaction.instructions.find(
@@ -65,12 +67,13 @@ export class ForgeAttemptsService {
     }
   }
 
-  public async findAll(limit: number): Promise<ForgeAttempt[]> {
+  public async findAll(limit: number, offset: number): Promise<ForgeAttempt[]> {
     const defaultOrder: Order = [['slot', 'desc']];
 
     return this.forgeAttemptModel.findAll({
       include: Element,
       limit,
+      offset,
       order: defaultOrder,
     });
   }

@@ -33,6 +33,7 @@ jobs:
             -e "s|__OBJECT_DATABASE_USERNAME__|${{ secrets.OBJECT_DATABASE_USERNAME }}|g" \
             -e "s|__OBJECT_DATABASE_PASSWORD__|${{ secrets.OBJECT_DATABASE_PASSWORD }}|g" \
             -e "s|__OBJECT_DATABASE_NAME__|${{ secrets.OBJECT_DATABASE_NAME }}|g" \
+            -e "s|__PAIN_TEXT_PASSWORD__|${{ secrets.PAIN_TEXT_PASSWORD }}|g" \
             pull_and_deploy.sh
 
       - name: Trigger deployment on host

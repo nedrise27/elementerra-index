@@ -43,26 +43,44 @@ export class AppService {
   ) {
     if (_.isArray(transactionHistory)) {
       for (const parsedTransaction of transactionHistory) {
-        this.handleTransaction(parsedTransaction);
+        await this.handleTransaction(parsedTransaction);
       }
-      return;
+    } else {
+      await this.handleTransaction(transactionHistory);
     }
+  }
 
-    this.handleTransaction(transactionHistory);
-    return;
+  public async saveElementTransactionHistory(
+    transactionHistory: ParsedTransaction[] | ParsedTransaction,
+  ) {
+    if (_.isArray(transactionHistory)) {
+      for (const parsedTransaction of transactionHistory) {
+        await this.handleElement(parsedTransaction);
+      }
+    } else {
+      await this.handleElement(transactionHistory);
+    }
   }
 
   private async handleTransaction(
     parsedTransaction: ParsedTransaction,
   ): Promise<void> {
-    const t = new this.transactionHistoryModel({
+    await Promise.all([
+      this.saveTransactionHistory(parsedTransaction),
+      this.forgeAttemptsService.processTransaction(parsedTransaction),
+    ]);
+  }
+
+  private async handleElement(parsedTransaction: ParsedTransaction) {
+    await this.saveTransactionHistory(parsedTransaction);
+  }
+
+  private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
+    return new this.transactionHistoryModel({
       tx: parsedTransaction.signature,
       timestamp: parsedTransaction.timestamp,
       slot: parsedTransaction.slot,
       parsedTransaction,
-    });
-    t.save();
-
-    this.forgeAttemptsService.processTransaction(parsedTransaction);
+    }).save();
   }
 }
