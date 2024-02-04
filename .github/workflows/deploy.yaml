@@ -15,12 +15,26 @@ concurrency:
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      SSH_USER: admin
+      SSH_KEY: ${{ secrets.ELEMENTERRA_ACTIONS_SSH_KEY }}
+      DEPLOYMENT_HOST: ${{ secrets.DEPLOYMENT_HOST }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Temp save ssh key
-        run: echo "${{ secrets.ELEMENTERRA_ACTIONS_SSH_KEY }}" > ./id_ed
+      - name: Configure ssh
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/id_ed 
+          chmod 600 ~/.ssh/id_ed
+          cat >>~/.ssh/config <<END
+          Host deployment-host
+            HostName $DEPLOYMENT_HOST
+            User $SSH_USER      
+            IdentityFile ~/.ssh/id_ed
+            StrictHostKeyChecking no
+          END
 
       - name: Fill update deployment script with secrets
         run: |
@@ -36,7 +50,4 @@ jobs:
             pull_and_deploy.sh
 
       - name: Trigger deployment on host
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-            -i ./id_ed admin@${{ secrets.DEPLOYMENT_HOST }} \
-            admin@${{ secrets.DEPLOYMENT_HOST }} 'bash -s' < pull_and_deploy.sh
+        run: ssh deployment-host 'bash -s' < pull_and_deploy.sh
