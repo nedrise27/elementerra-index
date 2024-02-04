@@ -7,6 +7,11 @@ import { AppService } from './app.service';
 import { ElementsModule } from './elements.module';
 import { Element, ForgeAttempt } from './models';
 import { ForgeAttemptsModule } from './forgeAttempts.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import {
+  TransactionHistory,
+  TransactionHistorySchema,
+} from './schemas/ProgramTransactionHistory.schema';
 
 @Module({
   imports: [
@@ -22,7 +27,17 @@ import { ForgeAttemptsModule } from './forgeAttempts.module';
       database: process.env.RELATIONAL_DATABASE_NAME,
       models: [Element, ForgeAttempt],
     }),
+    MongooseModule.forRoot(
+      `mongodb://${process.env.OBJECT_DATABASE_HOST}:${process.env.OBJECT_DATABASE_PORT}/${process.env.OBJECT_DATABASE_NAME}?authSource=admin`,
+      {
+        user: process.env.OBJECT_DATABASE_USERNAME,
+        pass: process.env.OBJECT_DATABASE_PASSWORD,
+      },
+    ),
     SequelizeModule.forFeature([ForgeAttempt, Element]),
+    MongooseModule.forFeature([
+      { name: TransactionHistory.name, schema: TransactionHistorySchema },
+    ]),
     ForgeAttemptsModule,
     ElementsModule,
   ],
