@@ -10,6 +10,8 @@ import { ForgeAttemptsService } from './forgeAttempts.service';
 import { Element, ForgeAttempt } from './models';
 import { StatsResponse } from './responses/StatsResponse';
 import { TransactionHistory } from './schemas/ProgramTransactionHistory.schema';
+import { ReplayResponse } from './responses/ReplayResponse';
+import { HeliusService } from './helius.service';
 
 @Injectable()
 export class AppService {
@@ -22,6 +24,7 @@ export class AppService {
     private readonly transactionHistoryModel: Model<TransactionHistory>,
     private readonly forgeAttemptsService: ForgeAttemptsService,
     private readonly elementsService: ElementsService,
+    private readonly heliusService: HeliusService,
   ) {}
 
   public async stats(): Promise<StatsResponse> {
@@ -63,6 +66,43 @@ export class AppService {
     } else {
       await this.handleElement(transactionHistory);
     }
+  }
+
+  public async replay(
+    guesser: string,
+    before?: string,
+    type?: string,
+  ): Promise<ReplayResponse> {
+    const limit = 100;
+
+    const transactions = await this.heliusService.getSignaturesForOwner(
+      guesser,
+      limit,
+      before,
+      type,
+    );
+
+    for (const transaction of transactions) {
+      await Promise.all([
+        this.saveTransactionHistory(transaction),
+        this.forgeAttemptsService.processTransaction(transaction),
+        this.elementsService.processTransaction(transaction),
+      ]);
+    }
+    // for (const transaction of transactions) {
+    //   await Promise.all([
+    //     this.saveTransactionHistory(transaction),
+    //     this.forgeAttemptsService.processTransaction(transaction),
+    //     this.elementsService.processTransaction(transaction),
+    //   ]);
+    // }
+
+    const last = _.last(transactions);
+
+    return {
+      lastTransaction: last?.signature,
+      lastSlot: last.slot,
+    };
   }
 
   private async handleTransaction(

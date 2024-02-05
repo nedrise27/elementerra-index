@@ -4,7 +4,6 @@ import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
 import { CompressedEvent, ParsedTransaction } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
-import { HeliusService } from './helius.service';
 import {
   ADD_TO_PENDING_GUESS_COUNT,
   ELEMENTERRA_ELEMENTS_TREE_ID,
@@ -14,7 +13,7 @@ import {
 } from './lib/constants';
 import { Element, ForgeAttempt } from './models';
 import { AddToPendingGuess } from './models/AddToPendingGuess.model';
-import { ReplayResponse } from './responses/ReplayResponse';
+
 @Injectable()
 export class ForgeAttemptsService {
   constructor(
@@ -25,7 +24,6 @@ export class ForgeAttemptsService {
     @InjectModel(Element)
     private readonly elementModel: typeof Element,
     private readonly elementsService: ElementsService,
-    private readonly heliusService: HeliusService,
   ) {}
 
   public async findOne(tx: string): Promise<ForgeAttempt | undefined> {
@@ -61,35 +59,6 @@ export class ForgeAttemptsService {
     }
 
     return this.forgeAttemptModel.findAll(query);
-  }
-
-  public async replay(
-    guesser: string,
-    before?: string,
-    type?: string,
-  ): Promise<ReplayResponse> {
-    const limit = 100;
-
-    const transactions = await this.heliusService.getSignaturesForOwner(
-      guesser,
-      limit,
-      before,
-      type,
-    );
-
-    for (const transaction of transactions) {
-      await Promise.all([
-        this.processTransaction(transaction),
-        this.elementsService.processTransaction(transaction),
-      ]);
-    }
-
-    const last = _.last(transactions);
-
-    return {
-      lastTransaction: last?.signature,
-      lastSlot: last.slot,
-    };
   }
 
   public async processTransaction(

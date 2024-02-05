@@ -15,6 +15,7 @@ import {
 import { AddToPendingGuess } from './models/AddToPendingGuess.model';
 import { WebhookController } from './webhook.controller';
 import { AdministrativeController } from './administrative.controller';
+import { HeliusModule } from './helius.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AdministrativeController } from './administrative.controller';
     ]),
     ForgeAttemptsModule,
     ElementsModule,
+    HeliusModule,
   ],
   controllers: [AppController, WebhookController, AdministrativeController],
   providers: [AppService],

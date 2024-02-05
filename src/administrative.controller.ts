@@ -1,29 +1,18 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Headers,
-  Post,
-} from '@nestjs/common';
-import { ElementsService } from './elements.service';
-import { ReplayElementsRequest } from './requests/ReplayElementsRequest';
-import { checkAuthHeader } from './lib/auth';
-import * as _ from 'lodash';
+import { Body, Controller, Headers, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ReplayForgeAttemptsRequest } from './requests/ReplayForgeAttemptsRequest';
+import * as _ from 'lodash';
+import { AppService } from './app.service';
+import { checkAuthHeader } from './lib/auth';
 import { ELEMENTERRA_PROGRAMM_ID } from './lib/constants';
-import { ForgeAttemptsService } from './forgeAttempts.service';
+import { ReplayForgeAttemptsRequest } from './requests/ReplayForgeAttemptsRequest';
 import { ReplayResponse } from './responses/ReplayResponse';
 
 @ApiTags('Administrative')
 @Controller('replay')
 export class AdministrativeController {
-  constructor(
-    private readonly elementsService: ElementsService,
-    private readonly forgeAttemptsService: ForgeAttemptsService,
-  ) {}
+  constructor(private readonly appService: AppService) {}
 
-  @Post('program')
+  @Post('')
   public async replayForgeAttempts(
     @Headers('Authorization') authHeader: string,
     @Body() request: ReplayForgeAttemptsRequest,
@@ -36,27 +25,12 @@ export class AdministrativeController {
       account = request.guesser;
     }
 
-    const res = await this.forgeAttemptsService.replay(
+    const res = await this.appService.replay(
       account,
       request.before,
       request.type,
     );
 
     return res;
-  }
-
-  @Post('elements')
-  public async replayElements(
-    @Headers('Authorization') authHeader: string,
-    @Body() request: ReplayElementsRequest,
-  ): Promise<void> {
-    checkAuthHeader(authHeader);
-    if (_.isNil(request) || _.isNil(request?.limit)) {
-      throw new BadRequestException(
-        'Please provide at least attribute "limi" in request payload',
-      );
-    }
-
-    return this.elementsService.replay(request.limit, request.before);
   }
 }
