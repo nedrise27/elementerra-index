@@ -85,7 +85,7 @@ export class AppService {
       tx: parsedTransaction.signature,
       timestamp: parsedTransaction.timestamp,
       slot: parsedTransaction.slot,
-      parsedTransaction,
+      data: parsedTransaction,
     }).save();
   }
 }
