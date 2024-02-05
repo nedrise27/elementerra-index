@@ -17,6 +17,7 @@ RELATIONAL_DATABASE_HOST='__RELATIONAL_DATABASE_HOST__' \
   OBJECT_DATABASE_PASSWORD='__OBJECT_DATABASE_PASSWORD__' \
   OBJECT_DATABASE_NAME='__OBJECT_DATABASE_NAME__' \
   PAIN_TEXT_PASSWORD='__PAIN_TEXT_PASSWORD__' \
+  HELIUS_API_KEY='__HELIUS_API_KEY__' \
   /home/admin/.local/bin/pm2 \
   restart ~/services/elementerra-index/dist/main.js \
   --update-env

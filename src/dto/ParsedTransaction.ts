@@ -1,3 +1,5 @@
+import { DAS } from 'helius-sdk';
+
 export class TokenBalanceChange {
   mint: string;
   rawTokenAmount: {
@@ -44,6 +46,7 @@ export class CompressedEvent {
   treeDelegate: string;
   treeId: string;
   type: string;
+  metadata?: DAS.Metadata;
 }
 export type Events = { nft: NftEvent[] } | { compressed: CompressedEvent[] };
 

@@ -20,15 +20,6 @@ export class AppController {
     return this.appService.stats();
   }
 
-  @Post('helius-webhook')
-  public async handleElementerraProgramTransactionsDep(
-    @Headers('Authorization') authHeader: string,
-    @Body() transactionHistory: ParsedTransaction[],
-  ) {
-    this.checkAuthHeader(authHeader);
-    await this.appService.saveProgramTransactionHistory(transactionHistory);
-  }
-
   @Post('helius-webhook/program')
   public async handleElementerraProgramTransactions(
     @Headers('Authorization') authHeader: string,

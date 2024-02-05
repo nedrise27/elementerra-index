@@ -8,6 +8,7 @@ import { ParsedTransaction } from './dto/ParsedTransaction';
 import { ForgeAttemptsService } from './forgeAttempts.service';
 import { Element, ForgeAttempt } from './models';
 import { TransactionHistory } from './schemas/ProgramTransactionHistory.schema';
+import { ElementsService } from './elements.service';
 
 @Injectable()
 export class AppService {
@@ -19,6 +20,7 @@ export class AppService {
     @InjectObjectModel(TransactionHistory.name)
     private readonly transactionHistoryModel: Model<TransactionHistory>,
     private readonly forgeAttemptsService: ForgeAttemptsService,
+    private readonly elementsService: ElementsService,
   ) {}
 
   public async stats() {
@@ -72,7 +74,10 @@ export class AppService {
   }
 
   private async handleElement(parsedTransaction: ParsedTransaction) {
-    await this.saveTransactionHistory(parsedTransaction);
+    await Promise.all([
+      this.saveTransactionHistory(parsedTransaction),
+      this.elementsService.processTransaction(parsedTransaction),
+    ]);
   }
 
   private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
