@@ -12,6 +12,7 @@ import {
   TransactionHistory,
   TransactionHistorySchema,
 } from './schemas/ProgramTransactionHistory.schema';
+import { AddToPendingGuess } from './models/AddToPendingGuess.model';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import {
       username: process.env.RELATIONAL_DATABASE_USERNAME,
       password: process.env.RELATIONAL_DATABASE_PASSWORD,
       database: process.env.RELATIONAL_DATABASE_NAME,
-      models: [Element, ForgeAttempt],
+      autoLoadModels: true,
     }),
     MongooseModule.forRoot(
       `mongodb://${process.env.OBJECT_DATABASE_HOST}:${process.env.OBJECT_DATABASE_PORT}/${process.env.OBJECT_DATABASE_NAME}?authSource=admin`,
@@ -34,7 +35,7 @@ import {
         pass: process.env.OBJECT_DATABASE_PASSWORD,
       },
     ),
-    SequelizeModule.forFeature([ForgeAttempt, Element]),
+    SequelizeModule.forFeature([ForgeAttempt, Element, AddToPendingGuess]),
     MongooseModule.forFeature([
       { name: TransactionHistory.name, schema: TransactionHistorySchema },
     ]),

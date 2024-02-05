@@ -20,8 +20,21 @@ module.exports = {
       guesser: {
         type: Sequelize.STRING,
       },
-      elementId: {
+      element_id: {
+        allowNull: true,
         type: Sequelize.STRING,
+        references: {
+          model: "elements",
+          key: "id"
+        }
+      },
+      forge_attempt_tx: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        references: {
+          model: "forge_attempts",
+          key: "tx",
+        }
       }
     })
   },

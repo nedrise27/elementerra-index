@@ -1,15 +1,8 @@
-import {
-  Body,
-  Headers,
-  Controller,
-  Get,
-  Post,
-  UnauthorizedException,
-} from '@nestjs/common';
-import * as _ from 'lodash';
+import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
 
 import { AppService } from './app.service';
 import { ParsedTransaction } from './dto/ParsedTransaction';
+import { checkAuthHeader } from './lib/auth';
 
 @Controller()
 export class AppController {
@@ -25,7 +18,7 @@ export class AppController {
     @Headers('Authorization') authHeader: string,
     @Body() transactionHistory: ParsedTransaction[],
   ) {
-    this.checkAuthHeader(authHeader);
+    checkAuthHeader(authHeader);
     await this.appService.saveProgramTransactionHistory(transactionHistory);
   }
 
@@ -34,16 +27,7 @@ export class AppController {
     @Headers('Authorization') authHeader: string,
     @Body() transactionHistory: ParsedTransaction[],
   ) {
-    this.checkAuthHeader(authHeader);
+    checkAuthHeader(authHeader);
     await this.appService.saveElementTransactionHistory(transactionHistory);
-  }
-
-  private checkAuthHeader(authHeader: string) {
-    if (
-      !_.isString(authHeader) ||
-      authHeader != process.env.PAIN_TEXT_PASSWORD
-    ) {
-      throw new UnauthorizedException();
-    }
   }
 }

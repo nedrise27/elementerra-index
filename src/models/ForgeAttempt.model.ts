@@ -1,6 +1,7 @@
 import { Model, Column, Table, HasMany } from 'sequelize-typescript';
 
 import { Element } from './Element.model';
+import { AddToPendingGuess } from './AddToPendingGuess.model';
 
 @Table({ tableName: 'forge_attempts', underscored: true, timestamps: false })
 export class ForgeAttempt extends Model {
@@ -22,6 +23,9 @@ export class ForgeAttempt extends Model {
   @Column
   hasFailed: boolean;
 
-  @HasMany(() => Element, 'forge_attempt_tx')
+  @HasMany(() => Element)
   guess: Element[];
+
+  @HasMany(() => AddToPendingGuess)
+  addToPendingGuesses: AddToPendingGuess[];
 }
