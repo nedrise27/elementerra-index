@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { StatsResponse } from './responses/StatsResponse';
 
 @ApiTags('Stats')
-@Controller()
+@Controller('stats')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 

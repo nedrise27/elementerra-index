@@ -14,6 +14,7 @@ import {
 } from './lib/constants';
 import { Element, ForgeAttempt } from './models';
 import { AddToPendingGuess } from './models/AddToPendingGuess.model';
+import { ReplayResponse } from './responses/ReplayResponse';
 @Injectable()
 export class ForgeAttemptsService {
   constructor(
@@ -62,7 +63,11 @@ export class ForgeAttemptsService {
     return this.forgeAttemptModel.findAll(query);
   }
 
-  public async replay(guesser: string, before?: string, type?: string) {
+  public async replay(
+    guesser: string,
+    before?: string,
+    type?: string,
+  ): Promise<ReplayResponse> {
     const limit = 100;
 
     const transactions = await this.heliusService.getSignaturesForOwner(

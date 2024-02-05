@@ -13,6 +13,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ReplayForgeAttemptsRequest } from './requests/ReplayForgeAttemptsRequest';
 import { ELEMENTERRA_PROGRAMM_ID } from './lib/constants';
 import { ForgeAttemptsService } from './forgeAttempts.service';
+import { ReplayResponse } from './responses/ReplayResponse';
 
 @ApiTags('Administrative')
 @Controller('replay')
@@ -26,7 +27,7 @@ export class AdministrativeController {
   public async replayForgeAttempts(
     @Headers('Authorization') authHeader: string,
     @Body() request: ReplayForgeAttemptsRequest,
-  ) {
+  ): Promise<ReplayResponse> {
     checkAuthHeader(authHeader);
 
     let account = _.clone(ELEMENTERRA_PROGRAMM_ID);

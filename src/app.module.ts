@@ -29,6 +29,7 @@ import { AdministrativeController } from './administrative.controller';
       password: process.env.RELATIONAL_DATABASE_PASSWORD,
       database: process.env.RELATIONAL_DATABASE_NAME,
       autoLoadModels: true,
+      logging: false,
     }),
     MongooseModule.forRoot(
       `mongodb://${process.env.OBJECT_DATABASE_HOST}:${process.env.OBJECT_DATABASE_PORT}/${process.env.OBJECT_DATABASE_NAME}?authSource=admin`,

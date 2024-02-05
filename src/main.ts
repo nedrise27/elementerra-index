@@ -9,12 +9,12 @@ async function bootstrap() {
     .setTitle('Non official Elementerra tools API - by nedrise')
     .setVersion('1.0')
     .addTag('Forge Attempts')
-    .addTag('Administrative')
     .addTag('Data')
+    .addTag('Administrative')
     .addTag('Stats')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+  SwaggerModule.setup('/', app, document);
 
   await app.listen(3000);
 }
