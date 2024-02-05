@@ -1,20 +1,16 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Headers,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
 import { ForgeAttemptsService } from './forgeAttempts.service';
 import { ForgeAttempt } from './models';
 
-import { getLimitOffsetFromPagination } from './lib/pagination';
+import * as _ from 'lodash';
+import { checkAuthHeader } from './lib/auth';
+import { ELEMENTERRA_PROGRAMM_ID } from './lib/constants';
+import {
+  ORDER_DIRECTIONS,
+  getLimitOffsetFromPagination,
+} from './lib/pagination';
 import { ListForgeAttemptsRequest } from './requests/ListForgeAttemptsRequest';
 import { ReplayForgeAttemptsRequest } from './requests/ReplayForgeAttemptsRequest';
-import { checkAuthHeader } from './lib/auth';
-import * as _ from 'lodash';
 
 @Controller('forge-attempts')
 export class ForgeAttemptsController {
@@ -29,7 +25,21 @@ export class ForgeAttemptsController {
       query?.size,
       10,
     );
-    return this.forgeAttemptsService.findAll(limit, offset, query?.guesser);
+
+    let order = 'desc';
+    if (!_.isNil(query?.order)) {
+      const o = query.order.toLowerCase();
+      if (ORDER_DIRECTIONS.includes(o)) {
+        order = o;
+      }
+    }
+
+    return this.forgeAttemptsService.findAll(
+      limit,
+      offset,
+      order,
+      query?.guesser,
+    );
   }
 
   @Post('replay')
@@ -39,12 +49,20 @@ export class ForgeAttemptsController {
   ) {
     checkAuthHeader(authHeader);
 
-    if (!_.has(request, 'guesser')) {
-      throw new BadRequestException(
-        "Please provide attribute 'guesser' in request payload",
-      );
+    let account = ELEMENTERRA_PROGRAMM_ID;
+
+    if (!_.isNil(request?.guesser)) {
+      account = request.guesser;
     }
 
-    await this.forgeAttemptsService.replay(request.guesser);
+    const res = await this.forgeAttemptsService.replay(
+      account,
+      request.before,
+      request.type,
+    );
+
+    console.log(res);
+
+    return res;
   }
 }

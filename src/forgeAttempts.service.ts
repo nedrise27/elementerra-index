@@ -30,9 +30,10 @@ export class ForgeAttemptsService {
   public async findAll(
     limit: number,
     offset: number,
+    order: string,
     guesser?: string,
   ): Promise<ForgeAttempt[]> {
-    const defaultOrder: Order = [['slot', 'desc']];
+    const defaultOrder: Order = [['slot', order]];
 
     const query = {
       include: [Element, AddToPendingGuess],
@@ -47,19 +48,29 @@ export class ForgeAttemptsService {
     return this.forgeAttemptModel.findAll(query);
   }
 
-  public async replay(guesser: string) {
+  public async replay(guesser: string, before?: string, type?: string) {
     const limit = 100;
-    let before: string | undefined;
 
     const transactions = await this.heliusService.getSignaturesForOwner(
       guesser,
       limit,
       before,
+      type,
     );
 
     for (const transaction of transactions) {
-      await this.processTransaction(transaction);
+      await Promise.all([
+        this.processTransaction(transaction),
+        this.elementsService.processTransaction(transaction),
+      ]);
     }
+
+    const last = _.last(transactions);
+
+    return {
+      lastTransaction: last?.signature,
+      lastSlot: last.slot,
+    };
   }
 
   public async processTransaction(
@@ -117,7 +128,6 @@ export class ForgeAttemptsService {
     let forgeAttemptTx: string | undefined;
 
     if (!_.isNil(foundElement?.forgeAttemptTx)) {
-      console.log('FOUND CLAIM TX');
       forgeAttemptTx = foundElement.forgeAttemptTx;
     }
 
@@ -134,7 +144,6 @@ export class ForgeAttemptsService {
   private async processClaimPendingGuessTransaction(
     transaction: ParsedTransaction,
   ) {
-    console.log('PROCESS CLAIM_PENDING_GUESS TRANSACTION');
     const tx = transaction.signature;
     const timestamp = transaction.timestamp;
     const slot = transaction.slot;
@@ -229,7 +238,7 @@ export class ForgeAttemptsService {
       });
 
     if (addToPendingGuessTransactions.count !== ADD_TO_PENDING_GUESS_COUNT) {
-      console.log(
+      console.error(
         `Found ${addToPendingGuessTransactions.count} AddToPendingGuess transactions but expected ${ADD_TO_PENDING_GUESS_COUNT} for ClaimToPendingGuess transaction ${claimTransaction.signature} at slot ${claimTransaction.slot}`,
       );
       return;

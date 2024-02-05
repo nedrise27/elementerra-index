@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import * as _ from 'lodash';
 
+export const ORDER_DIRECTIONS = ['asc', 'desc'];
+
 export function getLimitOffsetFromPagination(
   page?: number,
   size?: number,
