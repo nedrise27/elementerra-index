@@ -81,11 +81,15 @@ export class AppService {
   }
 
   private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
-    return new this.transactionHistoryModel({
-      tx: parsedTransaction.signature,
-      timestamp: parsedTransaction.timestamp,
-      slot: parsedTransaction.slot,
-      data: parsedTransaction,
-    }).save();
+    return this.transactionHistoryModel.findOneAndUpdate(
+      { tx: parsedTransaction.signature },
+      {
+        tx: parsedTransaction.signature,
+        timestamp: parsedTransaction.timestamp,
+        slot: parsedTransaction.slot,
+        data: parsedTransaction,
+      },
+      { upsert: true },
+    );
   }
 }
