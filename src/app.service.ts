@@ -5,10 +5,11 @@ import { InjectModel } from '@nestjs/sequelize';
 import * as _ from 'lodash';
 import { Model } from 'mongoose';
 import { ParsedTransaction } from './dto/ParsedTransaction';
+import { ElementsService } from './elements.service';
 import { ForgeAttemptsService } from './forgeAttempts.service';
 import { Element, ForgeAttempt } from './models';
+import { StatsResponse } from './responses/StatsResponse';
 import { TransactionHistory } from './schemas/ProgramTransactionHistory.schema';
-import { ElementsService } from './elements.service';
 
 @Injectable()
 export class AppService {
@@ -23,7 +24,7 @@ export class AppService {
     private readonly elementsService: ElementsService,
   ) {}
 
-  public async stats() {
+  public async stats(): Promise<StatsResponse> {
     const forgeAttemptCount = await this.forgeAttemptModel.count();
     const successfulForgeAttemptsCount = await this.forgeAttemptModel.count({
       where: {

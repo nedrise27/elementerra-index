@@ -27,11 +27,19 @@ export class ForgeAttemptsService {
     private readonly heliusService: HeliusService,
   ) {}
 
+  public async findOne(tx: string): Promise<ForgeAttempt | undefined> {
+    return this.forgeAttemptModel.findOne({
+      include: [Element, AddToPendingGuess],
+      where: { tx },
+    });
+  }
+
   public async findAll(
     limit: number,
     offset: number,
     order: string,
     guesser?: string,
+    beforeTimestamp?: number,
   ): Promise<ForgeAttempt[]> {
     const defaultOrder: Order = [['slot', order]];
 
@@ -43,6 +51,12 @@ export class ForgeAttemptsService {
     };
     if (!_.isNil(guesser)) {
       query['where'] = { guesser };
+    }
+    if (!_.isNil(beforeTimestamp)) {
+      query['where'] = {
+        ...query['where'],
+        timestamp: { [Op.lt]: beforeTimestamp },
+      };
     }
 
     return this.forgeAttemptModel.findAll(query);

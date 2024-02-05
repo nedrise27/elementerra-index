@@ -1,33 +1,19 @@
-import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
-import { ParsedTransaction } from './dto/ParsedTransaction';
-import { checkAuthHeader } from './lib/auth';
+import { StatsResponse } from './responses/StatsResponse';
 
+@ApiTags('Stats')
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @ApiResponse({
+    type: StatsResponse,
+  })
   @Get()
-  public async showStats() {
+  public async showStats(): Promise<StatsResponse> {
     return this.appService.stats();
-  }
-
-  @Post('helius-webhook/program')
-  public async handleElementerraProgramTransactions(
-    @Headers('Authorization') authHeader: string,
-    @Body() transactionHistory: ParsedTransaction[],
-  ) {
-    checkAuthHeader(authHeader);
-    await this.appService.saveProgramTransactionHistory(transactionHistory);
-  }
-
-  @Post('helius-webhook/elements')
-  public async handleElementsTransactions(
-    @Headers('Authorization') authHeader: string,
-    @Body() transactionHistory: ParsedTransaction[],
-  ) {
-    checkAuthHeader(authHeader);
-    await this.appService.saveElementTransactionHistory(transactionHistory);
   }
 }

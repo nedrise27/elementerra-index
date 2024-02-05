@@ -1,17 +1,22 @@
-import { Body, Controller, Get, Headers, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ForgeAttemptsService } from './forgeAttempts.service';
 import { ForgeAttempt } from './models';
 
 import * as _ from 'lodash';
-import { checkAuthHeader } from './lib/auth';
-import { ELEMENTERRA_PROGRAMM_ID } from './lib/constants';
 import {
   ORDER_DIRECTIONS,
   getLimitOffsetFromPagination,
 } from './lib/pagination';
 import { ListForgeAttemptsRequest } from './requests/ListForgeAttemptsRequest';
-import { ReplayForgeAttemptsRequest } from './requests/ReplayForgeAttemptsRequest';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Forge Attempts')
 @Controller('forge-attempts')
 export class ForgeAttemptsController {
   constructor(private readonly forgeAttemptsService: ForgeAttemptsService) {}
@@ -23,7 +28,7 @@ export class ForgeAttemptsController {
     const { limit, offset } = getLimitOffsetFromPagination(
       query?.page,
       query?.size,
-      10,
+      100,
     );
 
     let order = 'desc';
@@ -39,30 +44,21 @@ export class ForgeAttemptsController {
       offset,
       order,
       query?.guesser,
+      query?.beforeTimestamp,
     );
   }
 
-  @Post('replay')
-  public async replayForgeAttempts(
-    @Headers('Authorization') authHeader: string,
-    @Body() request: ReplayForgeAttemptsRequest,
-  ) {
-    checkAuthHeader(authHeader);
-
-    let account = ELEMENTERRA_PROGRAMM_ID;
-
-    if (!_.isNil(request?.guesser)) {
-      account = request.guesser;
+  @Get(':signature')
+  public async getForgeAttempt(
+    @Param() { signature }: { signature: string },
+  ): Promise<ForgeAttempt> {
+    console.log(signature);
+    if (!_.isString(signature)) {
+      throw new BadRequestException(
+        `Please provite a signature as path parameter. Got: "${signature}"`,
+      );
     }
 
-    const res = await this.forgeAttemptsService.replay(
-      account,
-      request.before,
-      request.type,
-    );
-
-    console.log(res);
-
-    return res;
+    return this.forgeAttemptsService.findOne(signature);
   }
 }

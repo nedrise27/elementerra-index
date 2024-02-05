@@ -13,6 +13,8 @@ import {
   TransactionHistorySchema,
 } from './schemas/ProgramTransactionHistory.schema';
 import { AddToPendingGuess } from './models/AddToPendingGuess.model';
+import { WebhookController } from './webhook.controller';
+import { AdministrativeController } from './administrative.controller';
 
 @Module({
   imports: [
@@ -42,7 +44,7 @@ import { AddToPendingGuess } from './models/AddToPendingGuess.model';
     ForgeAttemptsModule,
     ElementsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, WebhookController, AdministrativeController],
   providers: [AppService],
 })
 export class AppModule {}
