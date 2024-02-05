@@ -29,6 +29,7 @@
     "@nestjs/sequelize": "^10.0.0",
     "@nestjs/swagger": "^7.2.0",
     "axios": "^1.6.7",
+    "express": "^4.18.2",
     "helius-sdk": "^1.2.3",
     "lodash": "^4.17.21",
     "mongoose": "^8.1.1",

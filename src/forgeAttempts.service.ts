@@ -227,7 +227,7 @@ export class ForgeAttemptsService {
 
     if (addToPendingGuessTransactions.count !== ADD_TO_PENDING_GUESS_COUNT) {
       console.error(
-        `Found ${addToPendingGuessTransactions.count} AddToPendingGuess transactions but expected ${ADD_TO_PENDING_GUESS_COUNT} for ClaimToPendingGuess transaction ${claimTransaction.signature} at slot ${claimTransaction.slot}`,
+        `Found ${addToPendingGuessTransactions.count} AddToPendingGuess transactions but expected ${ADD_TO_PENDING_GUESS_COUNT} for ClaimPendingGuess transaction ${claimTransaction.signature} at slot ${claimTransaction.slot}`,
       );
       return;
     }
