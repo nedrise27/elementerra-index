@@ -89,13 +89,6 @@ export class AppService {
         this.elementsService.processTransaction(transaction),
       ]);
     }
-    // for (const transaction of transactions) {
-    //   await Promise.all([
-    //     this.saveTransactionHistory(transaction),
-    //     this.forgeAttemptsService.processTransaction(transaction),
-    //     this.elementsService.processTransaction(transaction),
-    //   ]);
-    // }
 
     const last = _.last(transactions);
 

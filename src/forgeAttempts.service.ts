@@ -195,7 +195,7 @@ export class ForgeAttemptsService {
   }
 
   // Get all AddToPendingGuess transactions between this claim and the one before for the same guesser
-  // If we find exacly four AddToPendingGuess transactions retrun them
+  // If we find exacly four AddToPendingGuess transactions return them
   private async getAddToPendingGuessForClaim(
     claimTransaction: ParsedTransaction,
   ): Promise<AddToPendingGuess[] | undefined> {
