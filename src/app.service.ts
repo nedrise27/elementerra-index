@@ -7,19 +7,17 @@ import { Model } from 'mongoose';
 import { ParsedTransaction } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
 import { ForgeAttemptsService } from './forgeAttempts.service';
-import { Element, ForgeAttempt } from './models';
-import { StatsResponse } from './responses/StatsResponse';
-import { TransactionHistory } from './schemas/ProgramTransactionHistory.schema';
-import { ReplayResponse } from './responses/ReplayResponse';
 import { HeliusService } from './helius.service';
+import { ForgeAttempt } from './models';
+import { ReplayResponse } from './responses/ReplayResponse';
+import { StatsResponse } from './responses/StatsResponse';
+import { TransactionHistory } from './schemas/TransactionHistory.schema';
 
 @Injectable()
 export class AppService {
   constructor(
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
-    @InjectModel(Element)
-    private readonly elementModel: typeof Element,
     @InjectObjectModel(TransactionHistory.name)
     private readonly transactionHistoryModel: Model<TransactionHistory>,
     private readonly forgeAttemptsService: ForgeAttemptsService,
@@ -44,7 +42,7 @@ export class AppService {
     };
   }
 
-  public async saveProgramTransactionHistory(
+  public async processTransactionHistory(
     transactionHistory: ParsedTransaction[] | ParsedTransaction,
   ) {
     if (_.isArray(transactionHistory)) {
@@ -53,18 +51,6 @@ export class AppService {
       }
     } else {
       await this.handleTransaction(transactionHistory);
-    }
-  }
-
-  public async saveElementTransactionHistory(
-    transactionHistory: ParsedTransaction[] | ParsedTransaction,
-  ) {
-    if (_.isArray(transactionHistory)) {
-      for (const parsedTransaction of transactionHistory) {
-        await this.handleElement(parsedTransaction);
-      }
-    } else {
-      await this.handleElement(transactionHistory);
     }
   }
 
@@ -82,13 +68,7 @@ export class AppService {
       type,
     );
 
-    for (const transaction of transactions) {
-      await Promise.all([
-        this.saveTransactionHistory(transaction),
-        this.forgeAttemptsService.processTransaction(transaction),
-        this.elementsService.processTransaction(transaction),
-      ]);
-    }
+    await this.processTransactionHistory(transactions);
 
     const last = _.last(transactions);
 
@@ -104,12 +84,6 @@ export class AppService {
     await Promise.all([
       this.saveTransactionHistory(parsedTransaction),
       this.forgeAttemptsService.processTransaction(parsedTransaction),
-    ]);
-  }
-
-  private async handleElement(parsedTransaction: ParsedTransaction) {
-    await Promise.all([
-      this.saveTransactionHistory(parsedTransaction),
       this.elementsService.processTransaction(parsedTransaction),
     ]);
   }

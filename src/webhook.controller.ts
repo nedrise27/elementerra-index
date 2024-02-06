@@ -16,7 +16,7 @@ export class WebhookController {
     @Body() transactionHistory: ParsedTransaction[],
   ) {
     checkAuthHeader(authHeader);
-    await this.appService.saveProgramTransactionHistory(transactionHistory);
+    await this.appService.processTransactionHistory(transactionHistory);
   }
 
   @Post('elements')
@@ -25,6 +25,6 @@ export class WebhookController {
     @Body() transactionHistory: ParsedTransaction[],
   ) {
     checkAuthHeader(authHeader);
-    await this.appService.saveElementTransactionHistory(transactionHistory);
+    await this.appService.processTransactionHistory(transactionHistory);
   }
 }

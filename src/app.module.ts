@@ -11,7 +11,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   TransactionHistory,
   TransactionHistorySchema,
-} from './schemas/ProgramTransactionHistory.schema';
+} from './schemas/TransactionHistory.schema';
 import { AddToPendingGuess } from './models/AddToPendingGuess.model';
 import { WebhookController } from './webhook.controller';
 import { AdministrativeController } from './administrative.controller';
