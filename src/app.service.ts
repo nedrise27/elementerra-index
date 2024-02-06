@@ -61,7 +61,7 @@ export class AppService {
   ): Promise<ReplayResponse> {
     const limit = 100;
 
-    const transactions = await this.heliusService.getSignaturesForOwner(
+    const transactions = await this.heliusService.getSignaturesForAddress(
       guesser,
       limit,
       before,

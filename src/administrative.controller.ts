@@ -13,7 +13,7 @@ export class AdministrativeController {
   constructor(private readonly appService: AppService) {}
 
   @Post('')
-  public async replayForgeAttempts(
+  public async replayTransactionHistory(
     @Headers('Authorization') authHeader: string,
     @Body() request: ReplayForgeAttemptsRequest,
   ): Promise<ReplayResponse> {

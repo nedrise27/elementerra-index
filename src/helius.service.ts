@@ -23,7 +23,7 @@ export class HeliusService {
     });
   }
 
-  public async getSignaturesForOwner(
+  public async getSignaturesForAddress(
     owner: string,
     limit?: number,
     before?: string,
