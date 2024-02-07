@@ -1,6 +1,8 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InjectModel as InjectObjectModel } from '@nestjs/mongoose';
 import { InjectModel } from '@nestjs/sequelize';
 import * as _ from 'lodash';
+import { Model } from 'mongoose';
 import { Op, Order } from 'sequelize';
 import { CompressedEvent, ParsedTransaction } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
@@ -12,23 +14,23 @@ import {
   ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
 } from './lib/constants';
 import { Element, ForgeAttempt } from './models';
-import { AddToPendingGuess } from './models/AddToPendingGuess.model';
+import { TransactionHistory } from './schemas/TransactionHistory.schema';
 
 @Injectable()
 export class ForgeAttemptsService {
   constructor(
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
-    @InjectModel(AddToPendingGuess)
-    private readonly addToPendingGuessModel: typeof AddToPendingGuess,
     @InjectModel(Element)
     private readonly elementModel: typeof Element,
+    @InjectObjectModel(TransactionHistory.name)
+    private readonly transactionHistoryModel: Model<TransactionHistory>,
     private readonly elementsService: ElementsService,
   ) {}
 
   public async findOne(tx: string): Promise<ForgeAttempt | undefined> {
     return this.forgeAttemptModel.findOne({
-      include: [Element, AddToPendingGuess],
+      include: [Element],
       where: { tx },
     });
   }
@@ -43,7 +45,7 @@ export class ForgeAttemptsService {
     const defaultOrder: Order = [['slot', order]];
 
     const query = {
-      include: [Element, AddToPendingGuess],
+      include: [Element],
       limit,
       offset,
       order: defaultOrder,
@@ -97,11 +99,6 @@ export class ForgeAttemptsService {
   private async processAddToPendingGuessTransaction(
     transaction: ParsedTransaction,
   ) {
-    const tx = transaction.signature;
-    const timestamp = transaction.timestamp;
-    const slot = transaction.slot;
-    const guesser = transaction.feePayer;
-
     const compressedEvents: CompressedEvent[] | undefined = _.get(
       transaction.events,
       'compressed',
@@ -111,22 +108,7 @@ export class ForgeAttemptsService {
       (e) => e.treeId === ELEMENTERRA_ELEMENTS_TREE_ID,
     )?.assetId;
 
-    const foundElement =
-      await this.elementsService.findOrFetchAndSaveElement(elementId);
-    let forgeAttemptTx: string | undefined;
-
-    if (!_.isNil(foundElement?.forgeAttemptTx)) {
-      forgeAttemptTx = foundElement.forgeAttemptTx;
-    }
-
-    await this.addToPendingGuessModel.upsert({
-      tx,
-      timestamp,
-      slot,
-      guesser,
-      elementId,
-      forgeAttemptTx,
-    });
+    await this.elementsService.findOrFetchAndSaveElement(elementId);
   }
 
   private async processClaimPendingGuessTransaction(
@@ -160,29 +142,34 @@ export class ForgeAttemptsService {
       hasFailed,
     });
 
+    const start = process.hrtime()[0];
     const addToPendingGuessTransactions =
       await this.getAddToPendingGuessForClaim(transaction);
+
+    console.log(`Claim handling queries took ${process.hrtime()[0] - start} s`);
 
     if (
       !_.isNil(addToPendingGuessTransactions) &&
       !_.isEmpty(addToPendingGuessTransactions)
     ) {
       const addToPendingGuessTxs = addToPendingGuessTransactions.map(
-        (a) => a.dataValues.tx,
+        (a) => a.tx,
       );
-      await this.addToPendingGuessModel.update(
-        {
-          forgeAttemptTx: tx,
-        },
+
+      await this.forgeAttemptModel.update(
+        { addToPendingGuessTxs },
         {
           where: {
-            tx: { [Op.in]: addToPendingGuessTxs },
+            tx,
           },
         },
       );
+
       const elementIds = addToPendingGuessTransactions.map(
-        (a) => a.dataValues.elementId,
+        (a) =>
+          a.data.events?.compressed?.find((e) => !_.isNil(e.assetId)).assetId,
       );
+
       await this.elementModel.update(
         { forgeAttemptTx: tx },
         {
@@ -198,40 +185,47 @@ export class ForgeAttemptsService {
   // If we find exacly four AddToPendingGuess transactions return them
   private async getAddToPendingGuessForClaim(
     claimTransaction: ParsedTransaction,
-  ): Promise<AddToPendingGuess[] | undefined> {
+  ): Promise<TransactionHistory[] | undefined> {
     const guesser = claimTransaction.feePayer;
-    const claimTimestamp = claimTransaction.timestamp;
+    const claimSlot = claimTransaction.slot;
 
-    const before = await this.forgeAttemptModel.findOne({
-      where: {
-        guesser,
-        timestamp: { [Op.lt]: claimTimestamp },
-      },
-      order: [['slot', 'desc']],
-      limit: 1,
-    });
-    if (_.isNil(before)) {
-      return;
+    const before = await this.transactionHistoryModel
+      .findOne({
+        'data.feePayer': guesser,
+        'data.instructions.data': ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
+        slot: { $lt: claimSlot },
+        limit: 1,
+      })
+      .sort({ slot: -1 })
+      .limit(1);
+
+    const slotQuery = {
+      slot: { $lte: claimSlot },
+    };
+    if (!_.isNil(before)) {
+      slotQuery.slot['$gte'] = before.slot;
     }
 
-    const addToPendingGuessTransactions =
-      await this.addToPendingGuessModel.findAndCountAll({
-        where: {
-          guesser,
-          timestamp: {
-            [Op.lt]: claimTimestamp,
-            [Op.gt]: before.dataValues.timestamp,
-          },
-        },
-      });
+    const query = {
+      'data.feePayer': guesser,
+      'data.instructions.data': {
+        $regex: `^${ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX}`,
+      },
+      ...slotQuery,
+    };
 
-    if (addToPendingGuessTransactions.count !== ADD_TO_PENDING_GUESS_COUNT) {
+    const addToPendingGuessTransactions = await this.transactionHistoryModel
+      .find(query)
+      .sort({ slot: -1 })
+      .limit(4);
+
+    if (addToPendingGuessTransactions.length !== ADD_TO_PENDING_GUESS_COUNT) {
       console.error(
-        `Found ${addToPendingGuessTransactions.count} AddToPendingGuess transactions but expected ${ADD_TO_PENDING_GUESS_COUNT} for ClaimPendingGuess transaction ${claimTransaction.signature} at slot ${claimTransaction.slot}`,
+        `Found ${addToPendingGuessTransactions.length} AddToPendingGuess transactions but expected ${ADD_TO_PENDING_GUESS_COUNT} for ClaimPendingGuess transaction ${claimTransaction.signature} at slot ${claimTransaction.slot}`,
       );
       return;
     }
 
-    return addToPendingGuessTransactions.rows;
+    return addToPendingGuessTransactions;
   }
 }

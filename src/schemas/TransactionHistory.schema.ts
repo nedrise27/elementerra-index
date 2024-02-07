@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type TransactionHistoryDocument = HydratedDocument<TransactionHistory>;
 
-@Schema({ collection: 'elementerra_program_transaction_history' })
+@Schema({ collection: 'elementerra_transaction_history' })
 export class TransactionHistory {
   @Prop({
     required: true,
@@ -27,8 +27,24 @@ export class TransactionHistory {
   })
   feePayer: string;
 
+  @Prop({
+    required: true,
+  })
+  containsClaimInstructions: boolean;
+
+  @Prop({
+    required: true,
+  })
+  containsAddToPendingGuessInstruction: boolean;
+
   @Prop({ type: Object })
-  data: any;
+  data: {
+    events?: {
+      compressed?: {
+        assetId?: string;
+      }[];
+    };
+  };
 }
 
 export const TransactionHistorySchema =

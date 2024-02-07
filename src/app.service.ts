@@ -12,6 +12,10 @@ import { ForgeAttempt } from './models';
 import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
 import { TransactionHistory } from './schemas/TransactionHistory.schema';
+import {
+  ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX,
+  ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
+} from './lib/constants';
 
 @Injectable()
 export class AppService {
@@ -78,23 +82,74 @@ export class AppService {
     };
   }
 
+  public async replayForgeAttempts(
+    limit?: number,
+    guesser?: string,
+    beforeSlot?: number,
+  ): Promise<ReplayResponse> {
+    const l = limit || 1000;
+
+    const query = {};
+
+    if (!_.isNil(guesser) && !_.isEmpty(guesser)) {
+      query['data.feePayer'] = guesser;
+    }
+
+    if (!_.isNil(beforeSlot) && _.isNumber(beforeSlot)) {
+      query['slot'] = { $lte: beforeSlot };
+    }
+
+    const transactions = await this.transactionHistoryModel
+      .find(query)
+      .sort({ slot: -1 })
+      .limit(l);
+
+    await Promise.all(
+      transactions.map((tx) =>
+        this.forgeAttemptsService.processTransaction(
+          tx.data as ParsedTransaction,
+        ),
+      ),
+    );
+
+    const last = _.last(transactions);
+
+    return {
+      lastTransaction: last?.tx,
+      lastSlot: last.slot,
+    };
+  }
+
   private async handleTransaction(
     parsedTransaction: ParsedTransaction,
   ): Promise<void> {
     await Promise.all([
       this.saveTransactionHistory(parsedTransaction),
-      this.forgeAttemptsService.processTransaction(parsedTransaction),
+      // this.forgeAttemptsService.processTransaction(parsedTransaction),
       this.elementsService.processTransaction(parsedTransaction),
     ]);
   }
 
   private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
+    const containsClaimInstruction = parsedTransaction.instructions.find(
+      (ix) => ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
+    );
+    const containsAddToPendingGuessInstruction =
+      parsedTransaction.instructions.find((ix) =>
+        ix.data.startsWith(
+          ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX,
+        ),
+      );
+
     return this.transactionHistoryModel.findOneAndUpdate(
       { tx: parsedTransaction.signature },
       {
         tx: parsedTransaction.signature,
         timestamp: parsedTransaction.timestamp,
         slot: parsedTransaction.slot,
+        feePayer: parsedTransaction.feePayer,
+        containsClaimInstruction,
+        containsAddToPendingGuessInstruction,
         data: parsedTransaction,
       },
       { upsert: true },

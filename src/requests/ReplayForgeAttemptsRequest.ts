@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class ReplayForgeAttemptsRequest {
+export class ReplayTransactionHistoryRequest {
   @ApiPropertyOptional()
   guesser?: string;
 
@@ -9,4 +9,15 @@ export class ReplayForgeAttemptsRequest {
 
   @ApiPropertyOptional()
   type?: string;
+}
+
+export class ReplayForgeAttemptsRequest {
+  @ApiPropertyOptional()
+  limit?: number;
+
+  @ApiPropertyOptional()
+  guesser?: string;
+
+  @ApiPropertyOptional()
+  beforeSlot?: number;
 }

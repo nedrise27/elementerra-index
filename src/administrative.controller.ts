@@ -4,7 +4,10 @@ import * as _ from 'lodash';
 import { AppService } from './app.service';
 import { checkAuthHeader } from './lib/auth';
 import { ELEMENTERRA_PROGRAMM_ID } from './lib/constants';
-import { ReplayForgeAttemptsRequest } from './requests/ReplayForgeAttemptsRequest';
+import {
+  ReplayForgeAttemptsRequest,
+  ReplayTransactionHistoryRequest,
+} from './requests/ReplayForgeAttemptsRequest';
 import { ReplayResponse } from './responses/ReplayResponse';
 
 @ApiTags('Administrative')
@@ -15,7 +18,7 @@ export class AdministrativeController {
   @Post('')
   public async replayTransactionHistory(
     @Headers('Authorization') authHeader: string,
-    @Body() request: ReplayForgeAttemptsRequest,
+    @Body() request: ReplayTransactionHistoryRequest,
   ): Promise<ReplayResponse> {
     checkAuthHeader(authHeader);
 
@@ -29,6 +32,22 @@ export class AdministrativeController {
       account,
       request.before,
       request.type,
+    );
+
+    return res;
+  }
+
+  @Post('/forge-attempts')
+  public async replayForgeAttempts(
+    @Headers('Authorization') authHeader: string,
+    @Body() request: ReplayForgeAttemptsRequest,
+  ): Promise<ReplayResponse> {
+    checkAuthHeader(authHeader);
+
+    const res = await this.appService.replayForgeAttempts(
+      request?.limit,
+      request?.guesser,
+      request?.beforeSlot,
     );
 
     return res;

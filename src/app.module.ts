@@ -2,20 +2,19 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 
+import { MongooseModule } from '@nestjs/mongoose';
+import { AdministrativeController } from './administrative.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ElementsModule } from './elements.module';
-import { Element, ForgeAttempt } from './models';
 import { ForgeAttemptsModule } from './forgeAttempts.module';
-import { MongooseModule } from '@nestjs/mongoose';
+import { HeliusModule } from './helius.module';
+import { Element, ForgeAttempt } from './models';
 import {
   TransactionHistory,
   TransactionHistorySchema,
 } from './schemas/TransactionHistory.schema';
-import { AddToPendingGuess } from './models/AddToPendingGuess.model';
 import { WebhookController } from './webhook.controller';
-import { AdministrativeController } from './administrative.controller';
-import { HeliusModule } from './helius.module';
 
 @Module({
   imports: [
@@ -39,7 +38,7 @@ import { HeliusModule } from './helius.module';
         pass: process.env.OBJECT_DATABASE_PASSWORD,
       },
     ),
-    SequelizeModule.forFeature([ForgeAttempt, Element, AddToPendingGuess]),
+    SequelizeModule.forFeature([ForgeAttempt, Element]),
     MongooseModule.forFeature([
       { name: TransactionHistory.name, schema: TransactionHistorySchema },
     ]),
