@@ -18,13 +18,4 @@ export class WebhookController {
     checkAuthHeader(authHeader);
     await this.appService.processTransactionHistory(transactionHistory);
   }
-
-  @Post('elements')
-  public async handleElementsTransactions(
-    @Headers('Authorization') authHeader: string,
-    @Body() transactionHistory: ParsedTransaction[],
-  ) {
-    checkAuthHeader(authHeader);
-    await this.appService.processTransactionHistory(transactionHistory);
-  }
 }

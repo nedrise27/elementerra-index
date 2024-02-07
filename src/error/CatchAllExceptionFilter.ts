@@ -21,7 +21,7 @@ export class CatchAllExceptionsFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    console.error(`Unexpected error while handling request`);
+    console.error(`Unexpected error while handling request: ${exception}`);
 
     const responseBody = {
       statusCode: httpStatus,

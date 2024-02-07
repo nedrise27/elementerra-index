@@ -21,21 +21,14 @@ export class TransactionHistory {
   @Prop({ required: true, indexes: [{ slot_1: 1 }, { 'slot_-1': -1 }] })
   slot: number;
 
-  @Prop({
-    required: true,
-    indexes: [{ fee_payer_1: 1 }, { 'fee_payer_-1': -1 }],
-  })
-  feePayer: string;
+  @Prop({ required: true, indexes: [{ fee_payer_text: 'text' }] })
+  feePayer?: string;
 
-  @Prop({
-    required: true,
-  })
-  containsClaimInstructions: boolean;
+  @Prop({ required: true })
+  containsClaimInstructions?: boolean;
 
-  @Prop({
-    required: true,
-  })
-  containsAddToPendingGuessInstruction: boolean;
+  @Prop({ required: true })
+  containsAddToPendingGuessInstruction?: boolean;
 
   @Prop({ type: Object })
   data: {

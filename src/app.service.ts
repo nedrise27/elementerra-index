@@ -131,15 +131,18 @@ export class AppService {
   }
 
   private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
-    const containsClaimInstruction = parsedTransaction.instructions.find(
-      (ix) => ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
+    const containsClaimInstruction = !_.isNil(
+      parsedTransaction.instructions.find(
+        (ix) => ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
+      ),
     );
-    const containsAddToPendingGuessInstruction =
+    const containsAddToPendingGuessInstruction = !_.isNil(
       parsedTransaction.instructions.find((ix) =>
         ix.data.startsWith(
           ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX,
         ),
-      );
+      ),
+    );
 
     return this.transactionHistoryModel.findOneAndUpdate(
       { tx: parsedTransaction.signature },
