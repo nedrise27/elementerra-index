@@ -1,9 +1,9 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import * as _ from 'lodash';
 import { NftPricesService } from './nftPrices.service';
 import { GetNftPriceRequest } from './requests/GetNftPriceRequest';
 import { NftPriceResponse } from './responses/NftPriceResponse';
-import * as _ from 'lodash';
 
 @ApiTags('NFT Prices')
 @Controller('nft-prices')
@@ -12,7 +12,7 @@ export class NftPricesController {
 
   @Get('/:collection/:level')
   public async getNftPrice(
-    @Query() query?: GetNftPriceRequest,
+    @Param() query?: GetNftPriceRequest,
   ): Promise<NftPriceResponse> {
     if (_.isNil(query?.collection) || _.isNil(query?.level)) {
       throw new BadRequestException(
