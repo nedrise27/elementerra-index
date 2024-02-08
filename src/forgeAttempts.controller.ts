@@ -52,7 +52,6 @@ export class ForgeAttemptsController {
   public async getForgeAttempt(
     @Param() { signature }: { signature: string },
   ): Promise<ForgeAttempt> {
-    console.log(signature);
     if (!_.isString(signature)) {
       throw new BadRequestException(
         `Please provite a signature as path parameter. Got: "${signature}"`,

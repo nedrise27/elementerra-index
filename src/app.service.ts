@@ -8,7 +8,10 @@ import { ParsedTransaction } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
 import { ForgeAttemptsService } from './forgeAttempts.service';
 import { HeliusService } from './helius.service';
-import { ForgeAttempt } from './models';
+import {
+  ForgeAttempt,
+  TransactionHistory as TransactionHistoryModel,
+} from './models';
 import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
 import { TransactionHistory } from './schemas/TransactionHistory.schema';
@@ -20,10 +23,12 @@ import {
 @Injectable()
 export class AppService {
   constructor(
+    @InjectModel(TransactionHistoryModel)
+    private readonly transactionHistoryModel: typeof TransactionHistoryModel,
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
     @InjectObjectModel(TransactionHistory.name)
-    private readonly transactionHistoryModel: Model<TransactionHistory>,
+    private readonly transactionHistorySchema: Model<TransactionHistory>,
     private readonly forgeAttemptsService: ForgeAttemptsService,
     private readonly elementsService: ElementsService,
     private readonly heliusService: HeliusService,
@@ -89,30 +94,49 @@ export class AppService {
   ): Promise<ReplayResponse> {
     const l = limit || 1000;
 
-    const query = {};
+    // const query = {};
 
-    if (!_.isNil(guesser) && !_.isEmpty(guesser)) {
-      query['data.feePayer'] = guesser;
-    }
+    // if (!_.isNil(guesser) && !_.isEmpty(guesser)) {
+    //   query['data.feePayer'] = guesser;
+    // }
 
+    // if (!_.isNil(beforeSlot) && _.isNumber(beforeSlot)) {
+    //   query['slot'] = { $lte: beforeSlot };
+    // }
+
+    // const transactions = await this.transactionHistorySchema
+    //   .find(query)
+    //   .sort({ slot: -1 })
+    //   .limit(l);
+
+    // await Promise.all(
+    //   transactions.map((tx) =>
+    //     this.forgeAttemptsService.processTransaction(
+    //       tx.data as ParsedTransaction,
+    //     ),
+    //   ),
+    // );
+
+    // const last = _.last(transactions);
+    const query = {
+      feePayer: null,
+    };
     if (!_.isNil(beforeSlot) && _.isNumber(beforeSlot)) {
       query['slot'] = { $lte: beforeSlot };
     }
 
-    const transactions = await this.transactionHistoryModel
+    const transactionHistory = await this.transactionHistorySchema
       .find(query)
-      .sort({ slot: -1 })
+      .sort({ slot: 'desc' })
       .limit(l);
 
     await Promise.all(
-      transactions.map((tx) =>
-        this.forgeAttemptsService.processTransaction(
-          tx.data as ParsedTransaction,
-        ),
+      transactionHistory.map((tx) =>
+        this.saveTransactionHistory(tx.data as ParsedTransaction),
       ),
     );
 
-    const last = _.last(transactions);
+    const last = _.last(transactionHistory);
 
     return {
       lastTransaction: last?.tx,
@@ -125,7 +149,6 @@ export class AppService {
   ): Promise<void> {
     await Promise.all([
       this.saveTransactionHistory(parsedTransaction),
-      // this.forgeAttemptsService.processTransaction(parsedTransaction),
       this.elementsService.processTransaction(parsedTransaction),
     ]);
   }
@@ -144,9 +167,8 @@ export class AppService {
       ),
     );
 
-    return this.transactionHistoryModel.findOneAndUpdate(
-      { tx: parsedTransaction.signature },
-      {
+    try {
+      await this.transactionHistoryModel.upsert({
         tx: parsedTransaction.signature,
         timestamp: parsedTransaction.timestamp,
         slot: parsedTransaction.slot,
@@ -154,8 +176,9 @@ export class AppService {
         containsClaimInstruction,
         containsAddToPendingGuessInstruction,
         data: parsedTransaction,
-      },
-      { upsert: true },
-    );
+      });
+    } catch (err) {
+      console.error(`Error while saving transaction: ${err}`);
+    }
   }
 }

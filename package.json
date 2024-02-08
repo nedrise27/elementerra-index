@@ -19,7 +19,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migration:run": "sequelize db:migrate",
-    "migration:revert": "sequelize db:migrate:undo"
+    "migration:revert": "sequelize db:migrate:undo",
+    "migration:create": "sequelize migration:create"
   },
   "dependencies": {
     "@nestjs/axios": "^3.0.1",

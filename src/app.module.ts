@@ -9,7 +9,11 @@ import { AppService } from './app.service';
 import { ElementsModule } from './elements.module';
 import { ForgeAttemptsModule } from './forgeAttempts.module';
 import { HeliusModule } from './helius.module';
-import { Element, ForgeAttempt } from './models';
+import {
+  Element,
+  ForgeAttempt,
+  TransactionHistory as TransactionHistoryModel,
+} from './models';
 import {
   TransactionHistory,
   TransactionHistorySchema,
@@ -38,7 +42,11 @@ import { WebhookController } from './webhook.controller';
         pass: process.env.OBJECT_DATABASE_PASSWORD,
       },
     ),
-    SequelizeModule.forFeature([ForgeAttempt, Element]),
+    SequelizeModule.forFeature([
+      TransactionHistoryModel,
+      ForgeAttempt,
+      Element,
+    ]),
     MongooseModule.forFeature([
       { name: TransactionHistory.name, schema: TransactionHistorySchema },
     ]),

@@ -5,23 +5,16 @@ export type TransactionHistoryDocument = HydratedDocument<TransactionHistory>;
 
 @Schema({ collection: 'elementerra_program_transaction_history' })
 export class TransactionHistory {
-  @Prop({
-    required: true,
-    unique: true,
-    indexes: [{ tx_1: 1 }, { 'tx_-1': -1 }],
-  })
+  @Prop({ required: true, unique: true })
   tx: string;
 
-  @Prop({
-    required: true,
-    indexes: [{ timestamp_1: 1 }, { 'timestamp_-1': -1 }],
-  })
+  @Prop({ required: true })
   timestamp: number;
 
   @Prop({ required: true, indexes: [{ slot_1: 1 }, { 'slot_-1': -1 }] })
   slot: number;
 
-  @Prop({ required: true, indexes: [{ fee_payer_text: 'text' }] })
+  @Prop({ required: true })
   feePayer?: string;
 
   @Prop({ required: true })

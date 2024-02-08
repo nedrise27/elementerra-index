@@ -142,11 +142,8 @@ export class ForgeAttemptsService {
       hasFailed,
     });
 
-    const start = process.hrtime()[0];
     const addToPendingGuessTransactions =
       await this.getAddToPendingGuessForClaim(transaction);
-
-    console.log(`Claim handling queries took ${process.hrtime()[0] - start} s`);
 
     if (
       !_.isNil(addToPendingGuessTransactions) &&
