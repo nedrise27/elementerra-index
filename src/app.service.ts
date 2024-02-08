@@ -177,6 +177,7 @@ export class AppService {
         ),
       ),
     );
+    const transactionError = !_.isNil(parsedTransaction?.transactionError);
 
     try {
       await this.transactionHistoryModel.upsert({
@@ -186,6 +187,7 @@ export class AppService {
         feePayer: parsedTransaction.feePayer,
         containsClaimInstruction,
         containsAddToPendingGuessInstruction,
+        transactionError,
         data: parsedTransaction,
       });
     } catch (err) {

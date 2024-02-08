@@ -24,6 +24,9 @@ export class TransactionHistory extends Model {
   @Column
   containsAddToPendingGuessInstruction: boolean;
 
+  @Column
+  transactionError: boolean;
+
   @Column({ type: DataType.JSONB })
   data: Record<string, any>;
 }
