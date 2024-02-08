@@ -14,6 +14,7 @@ import {
   TransactionHistory as TransactionHistoryModel,
 } from './models';
 import { WebhookController } from './webhook.controller';
+import { NftPricesModule } from './nftPrices.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { WebhookController } from './webhook.controller';
     ForgeAttemptsModule,
     ElementsModule,
     HeliusModule,
+    NftPricesModule,
   ],
   controllers: [AppController, WebhookController, AdministrativeController],
   providers: [AppService],
