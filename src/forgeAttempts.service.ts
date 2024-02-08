@@ -70,6 +70,11 @@ export class ForgeAttemptsService {
         return;
       }
 
+      if (!_.isNil(transaction.dataValues.data.transactionError)) {
+        console.log(`Skipping failed transaction ${tx}`);
+        return;
+      }
+
       if (transaction.containsClaimInstruction) {
         await this.processClaimPendingGuessTransaction(transaction);
       }
