@@ -19,5 +19,5 @@ export class ReplayForgeAttemptsRequest {
   guesser?: string;
 
   @ApiPropertyOptional()
-  beforeSlot?: number;
+  afterSlot?: number;
 }

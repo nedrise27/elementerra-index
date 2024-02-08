@@ -5,6 +5,7 @@ import { CompressedEvent, ParsedTransaction } from './dto/ParsedTransaction';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_ELEMENTS_COLLECTION_ID } from './lib/constants';
 import { Element } from './models/Element.model';
+import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 
 @Injectable()
 export class ElementsService {
@@ -14,20 +15,44 @@ export class ElementsService {
     private readonly heliusService: HeliusService,
   ) {}
 
-  public async replay(limit: number, before?: string): Promise<void> {
+  public async replay(
+    limit?: number,
+    page?: number,
+  ): Promise<ReplayElementsResponse> {
+    const l = _.min([limit, 1000]);
+    const p = _.max([page, 1]);
+
     const res = await this.heliusService.getAssetsByCollection(
       ELEMENTERRA_ELEMENTS_COLLECTION_ID,
-      limit,
-      before,
+      l,
+      p,
     );
 
-    for (const element of res.items) {
-      await this.saveElement(
-        element.id,
-        element.content?.metadata?.name,
-        element.content?.metadata?.symbol,
+    if (_.isNil(res?.items) || _.isEmpty(res?.items)) {
+      throw new Error(
+        `Could not find elments for collection ${ELEMENTERRA_ELEMENTS_COLLECTION_ID} limit ${l} page ${p}`,
       );
     }
+
+    await this.elementModel.bulkCreate(
+      res.items.map((i) => ({
+        id: i.id,
+        name: i.content?.metadata?.name,
+        symbol: i.content?.metadata?.symbol,
+      })),
+      { ignoreDuplicates: true },
+    );
+
+    const first = _.first(res?.items);
+    const last = _.last(res?.items);
+
+    return {
+      firstId: first?.id,
+      lastId: last?.id,
+      limit: res.limit,
+      page: res.page,
+      total: res.total,
+    };
   }
 
   public async processTransaction(

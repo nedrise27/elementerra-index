@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel as InjectObjectModel } from '@nestjs/mongoose';
 import { InjectModel } from '@nestjs/sequelize';
 
 import * as _ from 'lodash';
-import { Model } from 'mongoose';
 import { ParsedTransaction } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
 import { ForgeAttemptsService } from './forgeAttempts.service';
@@ -14,11 +12,12 @@ import {
 } from './models';
 import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
-import { TransactionHistory } from './schemas/TransactionHistory.schema';
 import {
   ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX,
   ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
 } from './lib/constants';
+import { Op } from 'sequelize';
+import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 
 @Injectable()
 export class AppService {
@@ -27,8 +26,6 @@ export class AppService {
     private readonly transactionHistoryModel: typeof TransactionHistoryModel,
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
-    @InjectObjectModel(TransactionHistory.name)
-    private readonly transactionHistorySchema: Model<TransactionHistory>,
     private readonly forgeAttemptsService: ForgeAttemptsService,
     private readonly elementsService: ElementsService,
     private readonly heliusService: HeliusService,
@@ -79,68 +76,78 @@ export class AppService {
 
     await this.processTransactionHistory(transactions);
 
+    const first = _.first(transactions);
     const last = _.last(transactions);
 
     return {
+      firstTransaction: first?.signature,
+      firstSlot: first?.slot,
       lastTransaction: last?.signature,
-      lastSlot: last.slot,
+      lastSlot: last?.slot,
     };
   }
 
   public async replayForgeAttempts(
     limit?: number,
     guesser?: string,
-    beforeSlot?: number,
+    afterSlot?: number,
   ): Promise<ReplayResponse> {
     const l = limit || 1000;
 
-    // const query = {};
+    const innerWhere = {};
 
-    // if (!_.isNil(guesser) && !_.isEmpty(guesser)) {
-    //   query['data.feePayer'] = guesser;
-    // }
-
-    // if (!_.isNil(beforeSlot) && _.isNumber(beforeSlot)) {
-    //   query['slot'] = { $lte: beforeSlot };
-    // }
-
-    // const transactions = await this.transactionHistorySchema
-    //   .find(query)
-    //   .sort({ slot: -1 })
-    //   .limit(l);
-
-    // await Promise.all(
-    //   transactions.map((tx) =>
-    //     this.forgeAttemptsService.processTransaction(
-    //       tx.data as ParsedTransaction,
-    //     ),
-    //   ),
-    // );
-
-    // const last = _.last(transactions);
-    const query = {
-      feePayer: null,
-    };
-    if (!_.isNil(beforeSlot) && _.isNumber(beforeSlot)) {
-      query['slot'] = { $lte: beforeSlot };
+    if (!_.isNil(guesser) && !_.isEmpty(guesser)) {
+      innerWhere['feePayer'] = guesser;
     }
 
-    const transactionHistory = await this.transactionHistorySchema
-      .find(query)
-      .sort({ slot: 'desc' })
-      .limit(l);
+    if (!_.isNil(afterSlot) && _.isNumber(afterSlot)) {
+      innerWhere['slot'] = { [Op.gte]: afterSlot };
+    }
 
-    await Promise.all(
-      transactionHistory.map((tx) =>
-        this.saveTransactionHistory(tx.data as ParsedTransaction),
-      ),
+    const where = {
+      [Op.or]: [
+        {
+          ...innerWhere,
+          containsClaimInstruction: true,
+        },
+        {
+          ...innerWhere,
+          containsAddToPendingGuessInstruction: true,
+        },
+      ],
+    };
+
+    const transactions = await this.transactionHistoryModel.findAll({
+      where,
+      order: [['slot', 'asc']],
+      limit: l,
+    });
+
+    let claims = 0;
+    let adds = 0;
+
+    for (const tx of transactions) {
+      if (tx.dataValues.containsClaimInstruction) {
+        claims++;
+        await this.forgeAttemptsService.processClaimPendingGuessTransaction(tx);
+      } else if (tx.dataValues.containsAddToPendingGuessInstruction) {
+        adds++;
+        await this.forgeAttemptsService.processAddToPendingGuessTransaction(tx);
+      }
+    }
+
+    console.log(
+      `Processed ${claims} ClaimPendingGuess and ${adds} AddToPendingGuess transactions`,
     );
 
-    const last = _.last(transactionHistory);
+    const first = _.first(transactions);
+    const last = _.last(transactions);
 
     return {
+      firstTransaction: first?.tx,
+      firstSlot: first?.slot,
       lastTransaction: last?.tx,
-      lastSlot: last.slot,
+      lastSlot: last?.slot,
     };
   }
 
@@ -151,6 +158,10 @@ export class AppService {
       this.saveTransactionHistory(parsedTransaction),
       this.elementsService.processTransaction(parsedTransaction),
     ]);
+
+    await this.forgeAttemptsService.processTransaction(
+      parsedTransaction.signature,
+    );
   }
 
   private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
@@ -180,5 +191,12 @@ export class AppService {
     } catch (err) {
       console.error(`Error while saving transaction: ${err}`);
     }
+  }
+
+  public async replayElements(
+    limit?: number,
+    page?: number,
+  ): Promise<ReplayElementsResponse> {
+    return this.elementsService.replay(limit, page);
   }
 }

@@ -29,10 +29,6 @@ jobs:
             -e "s|__RELATIONAL_DATABASE_USERNAME__|${{ secrets.RELATIONAL_DATABASE_USERNAME }}|g" \
             -e "s|__RELATIONAL_DATABASE_PASSWORD__|${{ secrets.RELATIONAL_DATABASE_PASSWORD }}|g" \
             -e "s|__RELATIONAL_DATABASE_NAME__|${{ secrets.RELATIONAL_DATABASE_NAME }}|g" \
-            -e "s|__OBJECT_DATABASE_HOST__|${{ secrets.OBJECT_DATABASE_HOST }}|g" \
-            -e "s|__OBJECT_DATABASE_USERNAME__|${{ secrets.OBJECT_DATABASE_USERNAME }}|g" \
-            -e "s|__OBJECT_DATABASE_PASSWORD__|${{ secrets.OBJECT_DATABASE_PASSWORD }}|g" \
-            -e "s|__OBJECT_DATABASE_NAME__|${{ secrets.OBJECT_DATABASE_NAME }}|g" \
             -e "s|__PAIN_TEXT_PASSWORD__|${{ secrets.PAIN_TEXT_PASSWORD }}|g" \
             -e "s|__HELIUS_API_KEY__|${{ secrets.HELIUS_API_KEY }}|g" \
             pull_and_deploy.sh

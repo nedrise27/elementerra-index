@@ -54,14 +54,13 @@ export class HeliusService {
   public async getAssetsByCollection(
     collection: string,
     limit: number,
-    before?: string,
+    page?: number,
   ) {
     return this.helius.rpc.getAssetsByGroup({
       groupKey: 'collection',
       groupValue: collection,
-      page: 1,
+      page,
       limit,
-      before,
     });
   }
 }

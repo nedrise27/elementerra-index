@@ -2,8 +2,8 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ReplayElementsRequest {
   @ApiPropertyOptional()
-  before?: string;
+  limit?: number;
 
   @ApiPropertyOptional()
-  limit?: number;
+  page?: number;
 }

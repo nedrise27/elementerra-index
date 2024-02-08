@@ -9,6 +9,8 @@ import {
   ReplayTransactionHistoryRequest,
 } from './requests/ReplayForgeAttemptsRequest';
 import { ReplayResponse } from './responses/ReplayResponse';
+import { ReplayElementsRequest } from './requests/ReplayElementsRequest';
+import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 
 @ApiTags('Administrative')
 @Controller('replay')
@@ -47,7 +49,22 @@ export class AdministrativeController {
     const res = await this.appService.replayForgeAttempts(
       request?.limit,
       request?.guesser,
-      request?.beforeSlot,
+      request?.afterSlot,
+    );
+
+    return res;
+  }
+
+  @Post('/elements')
+  public async replayElements(
+    @Headers('Authorization') authHeader: string,
+    @Body() request: ReplayElementsRequest,
+  ): Promise<ReplayElementsResponse> {
+    checkAuthHeader(authHeader);
+
+    const res = await this.appService.replayElements(
+      request?.limit,
+      request?.page,
     );
 
     return res;
