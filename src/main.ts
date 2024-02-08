@@ -11,9 +11,16 @@ async function bootstrap() {
   const httpAdapter = app.get(HttpAdapterHost);
   app.useGlobalFilters(new CatchAllExceptionsFilter(httpAdapter));
 
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Non official Elementerra tools API - by nedrise')
-    .setDescription("Repository at: https://github.com/nedrise27/elementerra-index")
+    .setDescription(
+      'Repository at: https://github.com/nedrise27/elementerra-index',
+    )
     .setVersion('1.0')
     .addTag('Forge Attempts')
     .addTag('Data')
