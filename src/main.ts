@@ -13,6 +13,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Non official Elementerra tools API - by nedrise')
+    .setDescription("Repository at: https://github.com/nedrise27/elementerra-index")
     .setVersion('1.0')
     .addTag('Forge Attempts')
     .addTag('Data')
