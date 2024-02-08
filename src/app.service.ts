@@ -74,6 +74,8 @@ export class AppService {
       type,
     );
 
+    transactions.reverse();
+
     await this.processTransactionHistory(transactions);
 
     const first = _.first(transactions);
