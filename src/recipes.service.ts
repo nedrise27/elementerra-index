@@ -176,7 +176,9 @@ export class RecipesService {
         wasSuccessful: !forgeAttempt.hasFailed,
       });
 
-      console.log(`NEW RECIPE TRIED: ['${elements.join("', '")}']`);
+      console.log(
+        `${forgeAttempt.guesser} tried a new recipe ['${elements.join("', '")}'] and ${forgeAttempt.hasFailed ? 'FAILED -.-' : 'SUCCEEDED! ^.^'}`,
+      );
     }
   }
 }
