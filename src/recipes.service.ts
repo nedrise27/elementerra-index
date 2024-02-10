@@ -157,6 +157,8 @@ export class RecipesService {
         elements,
         wasSuccessful: !forgeAttempt.hasFailed,
       });
+
+      console.log(`NEW RECIPE TRIED: ['${elements.join("', '")}']`);
     }
   }
 }
