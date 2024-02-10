@@ -9,12 +9,12 @@ import { ElementsModule } from './elements.module';
 import { ForgeAttemptsModule } from './forgeAttempts.module';
 import { HeliusModule } from './helius.module';
 import {
-  Element,
   ForgeAttempt,
   TransactionHistory as TransactionHistoryModel,
 } from './models';
-import { WebhookController } from './webhook.controller';
 import { NftPricesModule } from './nftPrices.module';
+import { RecipesModule } from './recipes.module';
+import { WebhookController } from './webhook.controller';
 
 @Module({
   imports: [
@@ -31,14 +31,11 @@ import { NftPricesModule } from './nftPrices.module';
       autoLoadModels: true,
       logging: false,
     }),
-    SequelizeModule.forFeature([
-      TransactionHistoryModel,
-      ForgeAttempt,
-      Element,
-    ]),
+    SequelizeModule.forFeature([TransactionHistoryModel, ForgeAttempt]),
+    HeliusModule,
     ForgeAttemptsModule,
     ElementsModule,
-    HeliusModule,
+    RecipesModule,
     NftPricesModule,
   ],
   controllers: [AppController, WebhookController, AdministrativeController],

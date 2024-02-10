@@ -1,0 +1,50 @@
+import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import * as _ from 'lodash';
+import { ElementNames } from './lib/elements';
+import { RecipesService } from './recipes.service';
+import { CheckRecipeRequest } from './requests/CheckRecipeRequest';
+import { GetAvailableRecipesRequest } from './requests/GetAvailableRecipesRequest';
+import { CheckRecipeResponse } from './responses/CheckRecipeResponse';
+import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResponse';
+
+@ApiTags('Recipes')
+@Controller('recipes')
+export class RecipesController {
+  constructor(private readonly recipesService: RecipesService) {}
+
+  @Post('check-recipe')
+  public async checkRecipe(
+    @Body() request: CheckRecipeRequest,
+  ): Promise<CheckRecipeResponse> {
+    if (request.elements.length !== 4) {
+      throw new BadRequestException('Please provide exacly 4 elements');
+    }
+
+    this.checkElementNames(request.elements);
+
+    return this.recipesService.checkRecipe(request.elements);
+  }
+
+  @Post('get-available-recipes')
+  public async getAvailableRecipes(
+    @Body() request: GetAvailableRecipesRequest,
+  ): Promise<GetAvailableRecipesResponse> {
+    this.checkElementNames(request.elements);
+
+    return this.recipesService.getAvailableRecipes(
+      request.elements,
+      request.tier,
+    );
+  }
+
+  private checkElementNames(elements: string[]) {
+    for (const e of elements) {
+      if (_.isNil(ElementNames[e])) {
+        throw new BadRequestException(
+          `Element name '${e}' is not valid please provide one of ['${Object.keys(ElementNames).join("', '")}']`,
+        );
+      }
+    }
+  }
+}

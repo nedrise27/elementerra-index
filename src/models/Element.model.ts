@@ -1,4 +1,10 @@
-import { Column, ForeignKey, Model, Table } from 'sequelize-typescript';
+import {
+  BelongsTo,
+  Column,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 
 import { ForgeAttempt } from './ForgeAttempt.model';
 
@@ -16,4 +22,7 @@ export class Element extends Model {
   @ForeignKey(() => ForgeAttempt)
   @Column
   forgeAttemptTx: string;
+
+  @BelongsTo(() => ForgeAttempt)
+  forgeAttempt: ForgeAttempt;
 }

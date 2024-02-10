@@ -1,23 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-
 import * as _ from 'lodash';
+import { Op } from 'sequelize';
 import { ParsedTransaction } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
 import { ForgeAttemptsService } from './forgeAttempts.service';
 import { HeliusService } from './helius.service';
 import {
-  ForgeAttempt,
-  TransactionHistory as TransactionHistoryModel,
-} from './models';
-import { ReplayResponse } from './responses/ReplayResponse';
-import { StatsResponse } from './responses/StatsResponse';
-import {
   ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX,
   ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
 } from './lib/constants';
-import { Op } from 'sequelize';
+import {
+  ForgeAttempt,
+  TransactionHistory as TransactionHistoryModel,
+} from './models';
+import { RecipesService } from './recipes.service';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
+import { ReplayResponse } from './responses/ReplayResponse';
+import { StatsResponse } from './responses/StatsResponse';
 
 @Injectable()
 export class AppService {
@@ -28,6 +28,7 @@ export class AppService {
     private readonly forgeAttemptModel: typeof ForgeAttempt,
     private readonly forgeAttemptsService: ForgeAttemptsService,
     private readonly elementsService: ElementsService,
+    private readonly recipesService: RecipesService,
     private readonly heliusService: HeliusService,
   ) {}
 
@@ -153,6 +154,17 @@ export class AppService {
     };
   }
 
+  public async replayElements(
+    limit?: number,
+    page?: number,
+  ): Promise<ReplayElementsResponse> {
+    return this.elementsService.replay(limit, page);
+  }
+
+  public async replayRecipes(): Promise<void> {
+    return this.recipesService.replay();
+  }
+
   private async handleTransaction(
     parsedTransaction: ParsedTransaction,
   ): Promise<void> {
@@ -161,9 +173,13 @@ export class AppService {
       this.elementsService.processTransaction(parsedTransaction),
     ]);
 
-    await this.forgeAttemptsService.processTransaction(
+    const forgeAttempt = await this.forgeAttemptsService.processTransaction(
       parsedTransaction.signature,
     );
+
+    if (!_.isNil(forgeAttempt)) {
+      await this.recipesService.checkAndUpdateRecipes(forgeAttempt);
+    }
   }
 
   private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
@@ -195,12 +211,5 @@ export class AppService {
     } catch (err) {
       console.error(`Error while saving transaction: ${err}`);
     }
-  }
-
-  public async replayElements(
-    limit?: number,
-    page?: number,
-  ): Promise<ReplayElementsResponse> {
-    return this.elementsService.replay(limit, page);
   }
 }

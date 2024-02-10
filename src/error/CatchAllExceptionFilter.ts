@@ -28,6 +28,7 @@ export class CatchAllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: httpAdapter.getRequestUrl(ctx.getRequest()),
       request: ctx.getRequest()?.body,
+      errorMessage: exception?.response?.message,
     };
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);

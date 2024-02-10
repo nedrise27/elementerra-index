@@ -57,7 +57,9 @@ export class ForgeAttemptsService {
     return this.forgeAttemptModel.findAll(query);
   }
 
-  public async processTransaction(tx: string): Promise<void> {
+  public async processTransaction(
+    tx: string,
+  ): Promise<ForgeAttempt | undefined> {
     try {
       const transaction = await this.transactionHistoryModel.findOne({
         where: { tx },
@@ -76,7 +78,7 @@ export class ForgeAttemptsService {
       }
 
       if (transaction.containsClaimInstruction) {
-        await this.processClaimPendingGuessTransaction(transaction);
+        return this.processClaimPendingGuessTransaction(transaction);
       }
 
       if (transaction.containsAddToPendingGuessInstruction) {
@@ -89,7 +91,7 @@ export class ForgeAttemptsService {
 
   public async processAddToPendingGuessTransaction(
     transaction: TransactionHistory,
-  ) {
+  ): Promise<void> {
     const compressedEvents: CompressedEvent[] | undefined = _.get(
       transaction.data.events,
       'compressed',
@@ -118,7 +120,7 @@ export class ForgeAttemptsService {
 
   public async processClaimPendingGuessTransaction(
     transaction: TransactionHistory,
-  ) {
+  ): Promise<ForgeAttempt | undefined> {
     const tx = transaction.tx;
     const timestamp = transaction.timestamp;
     const slot = transaction.slot;
@@ -151,7 +153,7 @@ export class ForgeAttemptsService {
         (a) => a.tx,
       );
 
-      await this.forgeAttemptModel.upsert({
+      const [forgeAttempt] = await this.forgeAttemptModel.upsert({
         tx,
         timestamp,
         slot,
@@ -173,6 +175,8 @@ export class ForgeAttemptsService {
           },
         },
       );
+
+      return forgeAttempt;
     }
   }
 

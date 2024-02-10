@@ -4,13 +4,13 @@ import * as _ from 'lodash';
 import { AppService } from './app.service';
 import { checkAuthHeader } from './lib/auth';
 import { ELEMENTERRA_PROGRAMM_ID } from './lib/constants';
+import { ReplayElementsRequest } from './requests/ReplayElementsRequest';
 import {
   ReplayForgeAttemptsRequest,
   ReplayTransactionHistoryRequest,
 } from './requests/ReplayForgeAttemptsRequest';
-import { ReplayResponse } from './responses/ReplayResponse';
-import { ReplayElementsRequest } from './requests/ReplayElementsRequest';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
+import { ReplayResponse } from './responses/ReplayResponse';
 
 @ApiTags('Administrative')
 @Controller('replay')
@@ -68,5 +68,12 @@ export class AdministrativeController {
     );
 
     return res;
+  }
+
+  @Post('/recipes')
+  public async replayRecipes(@Headers('Authorization') authHeader: string) {
+    checkAuthHeader(authHeader);
+
+    return this.appService.replayRecipes();
   }
 }

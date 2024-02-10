@@ -1,4 +1,4 @@
-# elementerra-history
+# elementerra-index
 
 ## API available at https://elementerra.line27.de
 

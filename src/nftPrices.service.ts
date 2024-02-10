@@ -48,6 +48,10 @@ export class NftPricesService {
 
   @Cron('0 * * * * *')
   async fetchRabbitPrice() {
+    if (process.env.NO_CRON) {
+      return;
+    }
+
     await this.fetchAndSaveRabbitPrice();
 
     await this.sleep(this.MAGIC_EDEN_RATE_LIMIT);
