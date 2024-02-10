@@ -61,7 +61,7 @@ export class RecipesService {
             const possibility = [first, second, third, fourth];
             possibility.sort();
             if (!possibilities.find((p) => _.isEqual(p, possibility))) {
-              possibilities.push([first, second, third, fourth]);
+              possibilities.push(possibility);
             }
           }
         }
