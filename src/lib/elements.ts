@@ -6,7 +6,7 @@ export function cleanAndOrderRecipe(recipe: Element[]): string[] {
   return r;
 }
 
-export enum ElementNames {
+export enum ElementName {
   air = 'air',
   water = 'water',
   fire = 'fire',
@@ -510,4 +510,4 @@ export const ELEMENTS = [
     name: 'whale',
     tier: 7,
   },
-];
+] as { name: ElementName; tier: number }[];

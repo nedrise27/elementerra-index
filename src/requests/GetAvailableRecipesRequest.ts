@@ -1,23 +1,44 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ElementNames } from 'src/lib/elements';
+import { ElementName } from 'src/lib/elements';
+
+export class GetAvailableRecipesRequestElement {
+  @ApiProperty({
+    type: 'string',
+    enum: ElementName,
+    enumName: 'ElementName',
+    example: ElementName.time,
+  })
+  element: ElementName;
+
+  @ApiProperty({
+    type: 'integer',
+    minimum: 0,
+    maximum: 4,
+    default: 0,
+  })
+  minAmount: number;
+
+  @ApiProperty({
+    type: 'integer',
+    minimum: 1,
+    maximum: 4,
+    default: 4,
+  })
+  maxAmount: number;
+}
 
 export class GetAvailableRecipesRequest {
   @ApiProperty({
-    type: 'array',
-    enum: ElementNames,
-    isArray: true,
-    enumName: 'ElementNames',
+    type: [GetAvailableRecipesRequestElement],
     example: [
-      ElementNames.water,
-      ElementNames.energy,
-      ElementNames.life,
-      ElementNames.heat,
-      ElementNames.time,
-      ElementNames.glass,
-      ElementNames.seed,
+      { element: ElementName.time, minAmount: 1, maxAmount: 4 },
+      { element: ElementName.dust, minAmount: 0, maxAmount: 4 },
+      { element: ElementName.pressure, minAmount: 0, maxAmount: 4 },
+      { element: ElementName.heat, minAmount: 0, maxAmount: 4 },
+      { element: ElementName.air, minAmount: 0, maxAmount: 4 },
     ],
   })
-  elements: string[];
+  elements: GetAvailableRecipesRequestElement[];
 
   @ApiProperty({
     type: 'integer',

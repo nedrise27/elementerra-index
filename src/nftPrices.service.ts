@@ -2,9 +2,9 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/sequelize';
-import { NftPrice } from './models/NftPrice.model';
-import { lastValueFrom } from 'rxjs';
 import * as _ from 'lodash';
+import { lastValueFrom } from 'rxjs';
+import { NftPrice } from './models/NftPrice.model';
 import { GetNftPriceRequest } from './requests/GetNftPriceRequest';
 import { NftPriceResponse } from './responses/NftPriceResponse';
 
@@ -46,7 +46,7 @@ export class NftPricesService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  @Cron('0 * * * * *')
+  @Cron('0 */2 * * * *')
   async fetchRabbitPrice() {
     if (process.env.NO_CRON) {
       return;

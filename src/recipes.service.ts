@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as _ from 'lodash';
-import { ELEMENTS, cleanAndOrderRecipe } from './lib/elements';
+import { Op } from 'sequelize';
+import { ELEMENTS, ElementName, cleanAndOrderRecipe } from './lib/elements';
 import { Element, ForgeAttempt } from './models';
 import { Recipe } from './models/Recipe';
+import { GetAvailableRecipesRequestElement } from './requests/GetAvailableRecipesRequest';
 import { CheckRecipeResponse } from './responses/CheckRecipeResponse';
 import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResponse';
-import { Op } from 'sequelize';
 
 @Injectable()
 export class RecipesService {
@@ -34,38 +35,55 @@ export class RecipesService {
   }
 
   public async getAvailableRecipes(
-    elements: string[],
+    requestedElements: GetAvailableRecipesRequestElement[],
     tier: number,
   ): Promise<GetAvailableRecipesResponse> {
-    let availableElements = ELEMENTS.filter((e) => elements.includes(e.name));
-
     const requiredTier = tier - 1;
 
-    // If no element with one less tier than searched is given in suggestion add all elements from lower tier
-    if (_.isNil(availableElements.find((e) => e.tier === requiredTier))) {
-      availableElements = availableElements.concat(
-        ELEMENTS.filter((e) => e.tier === requiredTier),
+    const requiredTierElements = requestedElements
+      .map((r) => ELEMENTS.find((e) => e.name === r.element))
+      .filter((e) => e.tier === requiredTier);
+
+    if (_.isNil(requiredTierElements) || _.isEmpty(requiredTierElements)) {
+      throw new BadRequestException(
+        `For a tier ${tier} element we need at least one tier ${requiredTier} element.`,
       );
     }
 
-    const requiredElements = availableElements.filter(
-      (e) => e.tier === requiredTier,
-    );
+    let possibilities: ElementName[][] = [];
 
-    const possibilities = [];
-
-    for (const first of requiredElements.map((e) => e.name)) {
-      for (const second of availableElements.map((e) => e.name)) {
-        for (const third of availableElements.map((e) => e.name)) {
-          for (const fourth of availableElements.map((e) => e.name)) {
-            const possibility = [first, second, third, fourth];
+    for (const first of requiredTierElements) {
+      for (const second of requestedElements) {
+        for (const third of requestedElements) {
+          for (const fourth of requestedElements) {
+            const possibility = [
+              first.name,
+              second.element,
+              third.element,
+              fourth.element,
+            ];
             possibility.sort();
+
             if (!possibilities.find((p) => _.isEqual(p, possibility))) {
               possibilities.push(possibility);
             }
           }
         }
       }
+    }
+
+    for (const requirement of requestedElements) {
+      possibilities = possibilities.filter((possibility) => {
+        const count = possibility.filter(
+          (p) => p === requirement.element,
+        ).length;
+
+        return _.inRange(
+          count,
+          requirement.minAmount,
+          requirement.maxAmount + 1,
+        );
+      });
     }
 
     const foundRecipes = await this.recipeModel.findAll({

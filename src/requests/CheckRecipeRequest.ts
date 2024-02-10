@@ -1,19 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ElementNames } from 'src/lib/elements';
+import { ElementName } from 'src/lib/elements';
 
 export class CheckRecipeRequest {
   @ApiProperty({
     type: 'array',
-    enum: ElementNames,
+    enum: ElementName,
     isArray: true,
-    enumName: 'ElementNames',
+    enumName: 'ElementName',
     minLength: 4,
     maxLength: 4,
     example: [
-      ElementNames.air,
-      ElementNames.earth,
-      ElementNames.earth,
-      ElementNames.earth,
+      ElementName.air,
+      ElementName.earth,
+      ElementName.earth,
+      ElementName.earth,
     ],
   })
   elements: string[];

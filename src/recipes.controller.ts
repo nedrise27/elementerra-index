@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import * as _ from 'lodash';
-import { ElementNames } from './lib/elements';
+import { ElementName } from './lib/elements';
 import { RecipesService } from './recipes.service';
 import { CheckRecipeRequest } from './requests/CheckRecipeRequest';
 import { GetAvailableRecipesRequest } from './requests/GetAvailableRecipesRequest';
@@ -30,7 +30,7 @@ export class RecipesController {
   public async getAvailableRecipes(
     @Body() request: GetAvailableRecipesRequest,
   ): Promise<GetAvailableRecipesResponse> {
-    this.checkElementNames(request.elements);
+    this.checkElementNames(request.elements?.map((e) => e.element));
 
     return this.recipesService.getAvailableRecipes(
       request.elements,
@@ -40,9 +40,9 @@ export class RecipesController {
 
   private checkElementNames(elements: string[]) {
     for (const e of elements) {
-      if (_.isNil(ElementNames[e])) {
+      if (_.isNil(ElementName[e])) {
         throw new BadRequestException(
-          `Element name '${e}' is not valid please provide one of ['${Object.keys(ElementNames).join("', '")}']`,
+          `Element name '${e}' is not valid please provide one of ['${Object.keys(ElementName).join("', '")}']`,
         );
       }
     }
