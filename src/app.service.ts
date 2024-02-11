@@ -18,6 +18,7 @@ import { RecipesService } from './recipes.service';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
+import { EventsGateway } from './events.gateway';
 
 @Injectable()
 export class AppService {
@@ -30,6 +31,7 @@ export class AppService {
     private readonly elementsService: ElementsService,
     private readonly recipesService: RecipesService,
     private readonly heliusService: HeliusService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   public async stats(): Promise<StatsResponse> {
@@ -39,14 +41,19 @@ export class AppService {
         hasFailed: false,
       },
     });
-    const unsuccessfulForgeAttemptsCount =
-      forgeAttemptCount - successfulForgeAttemptsCount;
+    const unsuccessfulForgeAttemptsCount = await this.forgeAttemptModel.count({
+      where: {
+        hasFailed: true,
+      },
+    });
 
-    return {
+    const response = {
       forgeAttemptCount,
       successfulForgeAttemptsCount,
       unsuccessfulForgeAttemptsCount,
     };
+
+    return response;
   }
 
   public async processTransactionHistory(

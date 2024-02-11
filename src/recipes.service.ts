@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as _ from 'lodash';
 import { Op } from 'sequelize';
+import { EventsGateway } from './events.gateway';
 import { ELEMENTS, ElementName, cleanAndOrderRecipe } from './lib/elements';
 import { Element, ForgeAttempt } from './models';
 import { Recipe } from './models/Recipe';
@@ -12,12 +13,11 @@ import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResp
 @Injectable()
 export class RecipesService {
   constructor(
-    @InjectModel(ForgeAttempt)
-    private readonly forgeAttemptModel: typeof ForgeAttempt,
     @InjectModel(Element)
     private readonly elementModel: typeof Element,
     @InjectModel(Recipe)
     private readonly recipeModel: typeof Recipe,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   public async checkRecipe(elements: string[]): Promise<CheckRecipeResponse> {
@@ -170,15 +170,25 @@ export class RecipesService {
 
     const foundRecipe = await this.recipeModel.findOne({ where: { elements } });
 
+    let msg: string | undefined;
+
     if (_.isNil(foundRecipe)) {
       await this.recipeModel.create({
         elements,
         wasSuccessful: !forgeAttempt.hasFailed,
       });
 
-      console.log(
-        `${forgeAttempt.guesser} tried a new recipe ['${elements.join("', '")}'] and ${forgeAttempt.hasFailed ? 'FAILED -.-' : 'SUCCEEDED! ^.^'}`,
-      );
+      msg = `Tried a new recipe ['${elements.join("', '")}'] and ${forgeAttempt.hasFailed ? 'FAILED -.-' : 'SUCCEEDED! ^.^'}`;
+
+      console.log(`${forgeAttempt.guesser} ${msg}`);
+    } else {
+      msg = `Forged ['${elements.join("', '")}']`;
     }
+
+    this.eventsGateway.sendEvent(
+      forgeAttempt.timestamp,
+      forgeAttempt.guesser,
+      msg,
+    );
   }
 }
