@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import {
   MessageBody,
   SubscribeMessage,
@@ -19,6 +20,7 @@ export class EventsGateway {
 
   @SubscribeMessage('events')
   handleEvent(@MessageBody() data: any) {
+    throw new InternalServerErrorException('Will be up again soon, sorry!');
     return data;
   }
 
