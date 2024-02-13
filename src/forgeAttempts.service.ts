@@ -123,7 +123,7 @@ export class ForgeAttemptsService {
 
     let msg: string | undefined;
 
-    if (guess.numberOfTimesTried === new BN(1)) {
+    if (guess.numberOfTimesTried.toNumber() === 1) {
       msg = `Tried a new recipe ['${recipe.join("', '")}'] and ${guess.isSuccess ? 'SUCCEEDED! ^.^' : 'FAILED -.-'}`;
 
       console.log(`${transaction.feePayer} ${msg}`);
