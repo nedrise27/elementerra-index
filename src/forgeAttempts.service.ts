@@ -4,10 +4,7 @@ import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
 import { CompressedEvent } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
-import {
-  ADD_TO_PENDING_GUESS_COUNT,
-  ELEMENTERRA_ELEMENTS_TREE_ID,
-} from './lib/constants';
+import { ADD_TO_PENDING_GUESS_COUNT } from './lib/constants';
 import { Element, ForgeAttempt, TransactionHistory } from './models';
 
 @Injectable()
@@ -105,7 +102,7 @@ export class ForgeAttemptsService {
     }
 
     const elementId = compressedEvents?.find(
-      (e) => e.treeId === ELEMENTERRA_ELEMENTS_TREE_ID,
+      (e) => e.type === 'COMPRESSED_NFT_BURN',
     )?.assetId;
 
     if (_.isNil(elementId)) {
