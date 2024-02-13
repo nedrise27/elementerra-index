@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { PublicKey } from '@solana/web3.js';
+import { Guess } from 'clients/elementerra-program/accounts';
 import * as _ from 'lodash';
 import { Op } from 'sequelize';
 import { ParsedTransaction } from './dto/ParsedTransaction';
@@ -100,52 +102,52 @@ export class AppService {
     guesser?: string,
     afterSlot?: number,
   ): Promise<ReplayResponse> {
-    const l = limit || 1000;
+    const l = _.min([limit, 100]);
 
-    const innerWhere = {};
+    const where = {
+      containsClaimInstruction: true,
+    };
 
     if (!_.isNil(guesser) && !_.isEmpty(guesser)) {
-      innerWhere['feePayer'] = guesser;
+      where['feePayer'] = guesser;
     }
 
     if (!_.isNil(afterSlot) && _.isNumber(afterSlot)) {
-      innerWhere['slot'] = { [Op.gte]: afterSlot };
+      where['slot'] = { [Op.gte]: afterSlot };
     }
-
-    const where = {
-      [Op.or]: [
-        {
-          ...innerWhere,
-          containsClaimInstruction: true,
-        },
-        {
-          ...innerWhere,
-          containsAddToPendingGuessInstruction: true,
-        },
-      ],
-    };
-
     const transactions = await this.transactionHistoryModel.findAll({
       where,
       order: [['slot', 'asc']],
       limit: l,
     });
 
-    let claims = 0;
-    let adds = 0;
+    const guessAddresses = transactions.map((tx) => {
+      const claimInstruction = tx.data.instructions.find(
+        (ix) => ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
+      );
+      return new PublicKey(claimInstruction.accounts[12]);
+    });
 
-    for (const tx of transactions) {
-      if (tx.dataValues.containsClaimInstruction) {
-        claims++;
-        await this.forgeAttemptsService.processClaimPendingGuessTransaction(tx);
-      } else if (tx.dataValues.containsAddToPendingGuessInstruction) {
-        adds++;
-        await this.forgeAttemptsService.processAddToPendingGuessTransaction(tx);
-      }
+    const guesses = await Guess.fetchMultiple(
+      this.heliusService.connection,
+      guessAddresses,
+    );
+
+    if (transactions.length !== guesses.length) {
+      throw new InternalServerErrorException(
+        `Got ${transactions.length} claim transactions and only found ${guesses.length} guesses`,
+      );
     }
 
-    console.log(
-      `Processed ${claims} ClaimPendingGuess and ${adds} AddToPendingGuess transactions`,
+    await Promise.all(
+      _.zip(transactions, guessAddresses, guesses).map(
+        ([tx, guessAddress, guess]) =>
+          this.forgeAttemptsService.processTransactionAndGuess(
+            tx,
+            guessAddress.toString(),
+            guess,
+          ),
+      ),
     );
 
     const first = _.first(transactions);
@@ -173,21 +175,22 @@ export class AppService {
   private async handleTransaction(
     parsedTransaction: ParsedTransaction,
   ): Promise<void> {
-    await Promise.all([
+    const [transactionHistory] = await Promise.all([
       this.saveTransactionHistory(parsedTransaction),
       this.elementsService.processTransaction(parsedTransaction),
     ]);
 
-    const forgeAttempt = await this.forgeAttemptsService.processTransaction(
-      parsedTransaction.signature,
-    );
-
-    if (!_.isNil(forgeAttempt)) {
-      await this.recipesService.checkAndUpdateRecipes(forgeAttempt);
+    if (
+      !_.isNil(transactionHistory) &&
+      transactionHistory.containsClaimInstruction
+    ) {
+      await this.forgeAttemptsService.processTransaction(transactionHistory);
     }
   }
 
-  private async saveTransactionHistory(parsedTransaction: ParsedTransaction) {
+  private async saveTransactionHistory(
+    parsedTransaction: ParsedTransaction,
+  ): Promise<TransactionHistoryModel | undefined> {
     const containsClaimInstruction = !_.isNil(
       parsedTransaction.instructions.find(
         (ix) => ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
@@ -203,7 +206,7 @@ export class AppService {
     const transactionError = !_.isNil(parsedTransaction?.transactionError);
 
     try {
-      await this.transactionHistoryModel.upsert({
+      const [transactionHistory] = await this.transactionHistoryModel.upsert({
         tx: parsedTransaction.signature,
         timestamp: parsedTransaction.timestamp,
         slot: parsedTransaction.slot,
@@ -213,6 +216,8 @@ export class AppService {
         transactionError,
         data: parsedTransaction,
       });
+
+      return transactionHistory;
     } catch (err) {
       console.error(`Error while saving transaction: ${err}`);
     }

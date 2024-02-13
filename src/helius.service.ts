@@ -1,5 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { Connection, clusterApiUrl } from '@solana/web3.js';
 import { Helius } from 'helius-sdk';
 import * as _ from 'lodash';
 import { lastValueFrom } from 'rxjs';
@@ -8,9 +9,13 @@ import { ParsedTransaction } from './dto/ParsedTransaction';
 @Injectable()
 export class HeliusService {
   private readonly helius: Helius;
+  public readonly connection: Connection;
 
   constructor(private readonly httpService: HttpService) {
     this.helius = new Helius(process.env.HELIUS_API_KEY);
+    this.connection = new Connection(
+      process.env.SOLANA_RPC_ENDPOINT || clusterApiUrl('mainnet-beta'),
+    );
   }
 
   public async getAssetById(assetId: string) {

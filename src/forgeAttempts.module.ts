@@ -5,12 +5,14 @@ import { ForgeAttemptsService } from 'src/forgeAttempts.service';
 import { ElementsModule } from './elements.module';
 import { HeliusModule } from './helius.module';
 import { Element, ForgeAttempt, TransactionHistory } from './models';
+import { RecipesModule } from './recipes.module';
 
 @Module({
   imports: [
     SequelizeModule.forFeature([TransactionHistory, ForgeAttempt, Element]),
     ElementsModule,
     HeliusModule,
+    RecipesModule,
   ],
   providers: [ForgeAttemptsService],
   controllers: [ForgeAttemptsController],

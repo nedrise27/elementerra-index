@@ -1,7 +1,5 @@
-import { Element } from 'src/models';
-
-export function cleanAndOrderRecipe(recipe: Element[]): string[] {
-  const r = recipe.map((e) => e.name.replaceAll(' ', '').toLowerCase());
+export function cleanAndOrderRecipe(recipe: string[]): string[] {
+  const r = recipe.map((e) => e.replaceAll(' ', '').toLowerCase());
   r.sort();
   return r;
 }

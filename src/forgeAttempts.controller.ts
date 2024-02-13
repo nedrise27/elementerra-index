@@ -6,15 +6,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { ForgeAttemptsService } from './forgeAttempts.service';
-import { ForgeAttempt } from './models';
 
+import { ApiTags } from '@nestjs/swagger';
 import * as _ from 'lodash';
 import {
   ORDER_DIRECTIONS,
   getLimitOffsetFromPagination,
 } from './lib/pagination';
 import { ListForgeAttemptsRequest } from './requests/ListForgeAttemptsRequest';
-import { ApiTags } from '@nestjs/swagger';
+import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
 
 @ApiTags('Forge Attempts')
 @Controller('forge-attempts')
@@ -24,7 +24,7 @@ export class ForgeAttemptsController {
   @Get()
   public async listForgeAttempts(
     @Query() query?: ListForgeAttemptsRequest,
-  ): Promise<ForgeAttempt[]> {
+  ): Promise<ForgeAttemptResponse[]> {
     const { limit, offset } = getLimitOffsetFromPagination(
       query?.page,
       query?.size,
@@ -51,7 +51,7 @@ export class ForgeAttemptsController {
   @Get(':signature')
   public async getForgeAttempt(
     @Param() { signature }: { signature: string },
-  ): Promise<ForgeAttempt> {
+  ): Promise<ForgeAttemptResponse> {
     if (!_.isString(signature)) {
       throw new BadRequestException(
         `Please provite a signature as path parameter. Got: "${signature}"`,

@@ -1,29 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { PublicKey } from '@solana/web3.js';
+import { Guess } from 'clients/elementerra-program/accounts';
 import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
-import { CompressedEvent } from './dto/ParsedTransaction';
-import { ElementsService } from './elements.service';
-import { ADD_TO_PENDING_GUESS_COUNT } from './lib/constants';
-import { Element, ForgeAttempt, TransactionHistory } from './models';
+import { HeliusService } from './helius.service';
+import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
+import { cleanAndOrderRecipe } from './lib/elements';
+import { ForgeAttempt, TransactionHistory } from './models';
+import { RecipesService } from './recipes.service';
+import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
 
 @Injectable()
 export class ForgeAttemptsService {
   constructor(
-    @InjectModel(TransactionHistory)
-    private readonly transactionHistoryModel: typeof TransactionHistory,
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
-    @InjectModel(Element)
-    private readonly elementModel: typeof Element,
-    private readonly elementsService: ElementsService,
+    private readonly heliusService: HeliusService,
+    private readonly recipesService: RecipesService,
   ) {}
 
-  public async findOne(tx: string): Promise<ForgeAttempt | undefined> {
-    return this.forgeAttemptModel.findOne({
-      include: [Element],
+  public async findOne(tx: string): Promise<ForgeAttemptResponse | undefined> {
+    const foundForgeAttempt = await this.forgeAttemptModel.findOne({
       where: { tx },
     });
+
+    return new ForgeAttemptResponse(foundForgeAttempt);
   }
 
   public async findAll(
@@ -32,11 +34,10 @@ export class ForgeAttemptsService {
     order: string,
     guesser?: string,
     beforeTimestamp?: number,
-  ): Promise<ForgeAttempt[]> {
+  ): Promise<ForgeAttemptResponse[]> {
     const defaultOrder: Order = [['slot', order]];
 
     const query = {
-      include: [Element],
       limit,
       offset,
       order: defaultOrder,
@@ -51,181 +52,83 @@ export class ForgeAttemptsService {
       };
     }
 
-    return this.forgeAttemptModel.findAll(query);
+    const foundForgeAttempts = await this.forgeAttemptModel.findAll(query);
+
+    return foundForgeAttempts.map((f) => new ForgeAttemptResponse(f));
   }
 
-  public async processTransaction(
-    tx: string,
-  ): Promise<ForgeAttempt | undefined> {
-    try {
-      const transaction = await this.transactionHistoryModel.findOne({
-        where: { tx },
-      });
-
-      if (_.isNil(transaction)) {
-        console.error(
-          `Could not find transaction ${tx} in our transaction history`,
-        );
-        return;
-      }
-
-      if (!_.isNil(transaction.dataValues.data.transactionError)) {
-        console.log(`Skipping failed transaction ${tx}`);
-        return;
-      }
-
-      if (transaction.containsClaimInstruction) {
-        return this.processClaimPendingGuessTransaction(transaction);
-      }
-
-      if (transaction.containsAddToPendingGuessInstruction) {
-        await this.processAddToPendingGuessTransaction(transaction);
-      }
-    } catch (err) {
-      console.error(`Error while processing transaction ${tx}. Error: ${err}`);
+  public async processTransaction(transactionHistory: TransactionHistory) {
+    if (!transactionHistory.containsClaimInstruction) {
+      return;
     }
+
+    const claimInstruction = transactionHistory.data.instructions.find(
+      (ix) => ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
+    );
+
+    if (_.isNil(claimInstruction)) {
+      console.error(
+        `Consistency Error! Transaction ${transactionHistory.tx} is marked as containsClaimInstruction but there was no instruction with data "${ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA}"`,
+      );
+      return;
+    }
+
+    const guessAddress = claimInstruction.accounts[12];
+
+    const guess = await Guess.fetch(
+      this.heliusService.connection,
+      new PublicKey(guessAddress),
+    );
+
+    if (_.isNil(guess)) {
+      console.error(
+        `Could not find guess account for claim transaction ${transactionHistory.tx}`,
+      );
+      return;
+    }
+
+    return this.processTransactionAndGuess(
+      transactionHistory,
+      guessAddress,
+      guess,
+    );
   }
 
-  public async processAddToPendingGuessTransaction(
+  public async processTransactionAndGuess(
     transaction: TransactionHistory,
-  ): Promise<void> {
-    const compressedEvents: CompressedEvent[] | undefined = _.get(
-      transaction.data.events,
-      'compressed',
-    );
+    guessAddress: string,
+    guess: Guess,
+  ) {
+    const elements = cleanAndOrderRecipe([
+      guess.elementTried1Name,
+      guess.elementTried2Name,
+      guess.elementTried3Name,
+      guess.elementTried4Name,
+    ]);
 
-    if (_.isNil(compressedEvents) || _.isEmpty(compressedEvents)) {
-      console.error(
-        `Could not find compressed event for AddToPendingGuess transaction ${transaction.tx}`,
-      );
-      return;
-    }
+    const promises: Promise<any>[] = [
+      this.forgeAttemptModel.upsert({
+        tx: transaction.tx,
+        timestamp: transaction.timestamp,
+        slot: transaction.slot,
+        guesser: transaction.feePayer,
+        hasFailed: !guess.isSuccess,
+        guessAddress,
+        guess: elements,
+      }),
+    ];
 
-    const elementId = compressedEvents?.find(
-      (e) => e.type === 'COMPRESSED_NFT_BURN',
-    )?.assetId;
-
-    if (_.isNil(elementId)) {
-      console.error(
-        `Could not find elementId for AddToPendingGuess transaction ${transaction.tx}`,
-      );
-      return;
-    }
-
-    await this.elementsService.findOrFetchAndSaveElement(elementId);
-  }
-
-  public async processClaimPendingGuessTransaction(
-    transaction: TransactionHistory,
-  ): Promise<ForgeAttempt | undefined> {
-    const tx = transaction.tx;
-    const timestamp = transaction.timestamp;
-    const slot = transaction.slot;
-    const guesser = transaction.feePayer;
-
-    // if no chest was given => failed
-    let hasFailed = _.isNil(
-      transaction.data.tokenTransfers.find((t) => t.toUserAccount === guesser),
-    );
-
-    // if not element was given => failed
-    const compressedEvents: CompressedEvent[] | undefined = _.get(
-      transaction.data.events,
-      'compressed',
-    );
-    if (hasFailed && !_.isNil(compressedEvents)) {
-      hasFailed = _.isNil(
-        compressedEvents.find((e) => e.newLeafOwner === guesser),
+    if (!_.isNil(guess)) {
+      promises.push(
+        this.recipesService.checkAndUpdateRecipes(
+          transaction.feePayer,
+          transaction.timestamp,
+          guess,
+          guessAddress,
+        ),
       );
     }
 
-    const addToPendingGuessTransactions =
-      await this.getAddToPendingGuessForClaim(transaction);
-
-    if (
-      !_.isNil(addToPendingGuessTransactions) &&
-      !_.isEmpty(addToPendingGuessTransactions)
-    ) {
-      const addToPendingGuesses = addToPendingGuessTransactions.map(
-        (a) => a.tx,
-      );
-
-      const [forgeAttempt] = await this.forgeAttemptModel.upsert({
-        tx,
-        timestamp,
-        slot,
-        guesser,
-        hasFailed,
-        addToPendingGuesses,
-      });
-
-      const elementIds = addToPendingGuessTransactions.map(
-        (a) =>
-          a.data.events?.compressed?.find((e) => !_.isNil(e.assetId)).assetId,
-      );
-
-      await this.elementModel.update(
-        { forgeAttemptTx: tx },
-        {
-          where: {
-            id: { [Op.in]: elementIds },
-          },
-        },
-      );
-
-      return forgeAttempt;
-    }
-  }
-
-  // Get all AddToPendingGuess transactions between this claim and the one before if exists for the same guesser
-  // If we find exacly four AddToPendingGuess transactions return them
-  private async getAddToPendingGuessForClaim(
-    claimTransaction: TransactionHistory,
-  ): Promise<TransactionHistory[] | undefined> {
-    const guesser = claimTransaction.feePayer;
-    const claimSlot = claimTransaction.slot;
-
-    const claimBefore = await this.transactionHistoryModel.findOne({
-      where: {
-        feePayer: claimTransaction.dataValues.feePayer,
-        containsClaimInstruction: true,
-        slot: { [Op.lt]: claimSlot },
-      },
-      order: [['slot', 'desc']],
-      limit: 1,
-    });
-
-    const where = {
-      feePayer: guesser,
-      containsAddToPendingGuessInstruction: true,
-    };
-
-    if (!_.isNil(claimBefore)) {
-      where['slot'] = {
-        [Op.and]: [
-          { [Op.lte]: claimSlot, [Op.gt]: claimBefore.dataValues.slot },
-        ],
-      };
-    } else {
-      where['slot'] = {
-        [Op.lte]: claimSlot,
-      };
-    }
-
-    const addToPendingGuessTransactions =
-      await this.transactionHistoryModel.findAll({
-        where,
-        order: [['slot', 'desc']],
-        limit: 4,
-      });
-
-    if (addToPendingGuessTransactions.length !== ADD_TO_PENDING_GUESS_COUNT) {
-      console.error(
-        `Found ${addToPendingGuessTransactions.length} AddToPendingGuess transactions but expected ${ADD_TO_PENDING_GUESS_COUNT} for ClaimPendingGuess transaction ${claimTransaction.dataValues.tx} at slot ${claimTransaction.dataValues.slot}`,
-      );
-      return;
-    }
-
-    return addToPendingGuessTransactions;
+    await Promise.all(promises);
   }
 }

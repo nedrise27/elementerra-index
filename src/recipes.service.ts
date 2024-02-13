@@ -1,33 +1,35 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { BN } from 'bn.js';
+import { Guess } from 'clients/elementerra-program/accounts';
 import * as _ from 'lodash';
 import { Op } from 'sequelize';
 import { ELEMENTS, ElementName, cleanAndOrderRecipe } from './lib/elements';
-import { Element, ForgeAttempt } from './models';
-import { Recipe } from './models/Recipe';
+import { sendWebsocketEvent } from './lib/events';
+import { Element } from './models';
+import { GuessModel } from './models/Guess.model';
 import { GetAvailableRecipesRequestElement } from './requests/GetAvailableRecipesRequest';
 import { CheckRecipeResponse } from './responses/CheckRecipeResponse';
 import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResponse';
-import { sendWebsocketEvent } from './lib/events';
 
 @Injectable()
 export class RecipesService {
   constructor(
     @InjectModel(Element)
     private readonly elementModel: typeof Element,
-    @InjectModel(Recipe)
-    private readonly recipeModel: typeof Recipe,
+    @InjectModel(GuessModel)
+    private readonly guessModel: typeof GuessModel,
   ) {}
 
-  public async checkRecipe(elements: string[]): Promise<CheckRecipeResponse> {
-    const foundRecipe = await this.recipeModel.findOne({ where: { elements } });
+  public async checkRecipe(recipe: string[]): Promise<CheckRecipeResponse> {
+    const foundRecipe = await this.guessModel.findOne({ where: { recipe } });
 
     let wasTried: boolean = false;
     let wasSuccessful: boolean | null = null;
 
     if (!_.isNil(foundRecipe)) {
       wasTried = true;
-      wasSuccessful = foundRecipe.wasSuccessful;
+      wasSuccessful = foundRecipe.isSuccess;
     }
 
     return new CheckRecipeResponse(wasTried, wasSuccessful);
@@ -85,14 +87,14 @@ export class RecipesService {
       });
     }
 
-    const foundRecipes = await this.recipeModel.findAll({
+    const foundRecipes = await this.guessModel.findAll({
       where: {
-        elements: { [Op.in]: possibilities },
+        recipe: { [Op.in]: possibilities },
       },
     });
 
     const foundPossibilies = foundRecipes.map((r) => {
-      const elements = r.elements;
+      const elements = r.recipe;
       elements.sort();
       return elements;
     });
@@ -115,37 +117,37 @@ export class RecipesService {
     const successfulElements = [];
     for (const r of successfulRecipes[0]) {
       const row: any = r;
-      const elements = row.recipe.map((e) => e.replace(' ', '').toLowerCase());
-      elements.sort();
-      const wasSuccessful: boolean = !row.hasFailed;
+      const recipe = row.recipe.map((e) => e.replace(' ', '').toLowerCase());
+      recipe.sort();
+      const isSuccess: boolean = !row.hasFailed;
 
-      successfulElements.push(elements);
+      successfulElements.push(recipe);
 
-      const res = await this.recipeModel.findOne({
+      const res = await this.guessModel.findOne({
         where: {
-          elements,
+          recipe,
         },
       });
       if (_.isNil(res)) {
-        await this.recipeModel.create({
-          elements,
-          wasSuccessful,
+        await this.guessModel.create({
+          recipe,
+          isSuccess,
         });
       }
     }
 
     for (const r of failedRecipes[0]) {
       const row: any = r;
-      const elements = row.recipe.map((e) => e.replace(' ', '').toLowerCase());
-      elements.sort();
+      const recipe = row.recipe.map((e) => e.replace(' ', '').toLowerCase());
+      recipe.sort();
       const wasSuccessful: boolean = !row.hasFailed;
 
-      if (!successfulElements.find((e) => _.isEqual(e, elements))) {
-        const res = await this.recipeModel.findOne({ where: { elements } });
+      if (!successfulElements.find((e) => _.isEqual(e, recipe))) {
+        const res = await this.guessModel.findOne({ where: { recipe } });
 
         if (_.isNil(res)) {
-          await this.recipeModel.create({
-            elements,
+          await this.guessModel.create({
+            recipe,
             wasSuccessful,
           });
         }
@@ -153,43 +155,51 @@ export class RecipesService {
     }
   }
 
-  public async checkAndUpdateRecipes(forgeAttempt: ForgeAttempt) {
-    const guessedElements = await this.elementModel.findAll({
-      where: { forgeAttemptTx: forgeAttempt.tx },
-    });
+  public async checkAndUpdateRecipes(
+    guesser: string,
+    timestamp: number,
+    guess: Guess,
+    guessAddress: string,
+  ) {
+    const guessedRecipe = [
+      guess.elementTried1Name,
+      guess.elementTried2Name,
+      guess.elementTried3Name,
+      guess.elementTried4Name,
+    ];
 
-    if (guessedElements.length !== 4) {
-      console.log(
-        `Could not find four guessedElements for ClaimTx ${forgeAttempt.tx}`,
-      );
-      return;
-    }
+    const recipe = cleanAndOrderRecipe(guessedRecipe);
 
-    const elements = cleanAndOrderRecipe(guessedElements);
-
-    const foundRecipe = await this.recipeModel.findOne({ where: { elements } });
+    const foundRecipe = await this.guessModel.findOne({ where: { recipe } });
 
     let msg: string | undefined;
+    let created: null | boolean;
 
     if (_.isNil(foundRecipe)) {
-      await this.recipeModel.create({
-        elements,
-        wasSuccessful: !forgeAttempt.hasFailed,
+      const res = await this.guessModel.upsert({
+        address: guessAddress,
+        seasonNumber: guess.seasonNumber,
+        numberOfTimesTried: guess.numberOfTimesTried.toNumber(),
+        isSuccess: guess.isSuccess,
+        element: guess.element.toString(),
+        recipe,
+        creator: guess.creator.toString(),
       });
+      created = res[1];
+    }
 
-      msg = `Tried a new recipe ['${elements.join("', '")}'] and ${forgeAttempt.hasFailed ? 'FAILED -.-' : 'SUCCEEDED! ^.^'}`;
+    if (guess.numberOfTimesTried === new BN(1)) {
+      msg = `Tried a new recipe ['${recipe.join("', '")}'] and ${guess.isSuccess ? 'SUCCEEDED! ^.^' : 'FAILED -.-'}`;
 
-      console.log(`${forgeAttempt.guesser} ${msg}`);
+      console.log(`${guesser} ${msg}`);
     } else {
-      msg = `Forged ['${elements.join("', '")}']`;
+      msg = `Forged ['${recipe.join("', '")}']`;
     }
 
     try {
-      await sendWebsocketEvent(
-        forgeAttempt.timestamp,
-        forgeAttempt.guesser,
-        msg,
-      );
+      if (created) {
+        await sendWebsocketEvent(timestamp, guesser, msg);
+      }
     } catch (err) {
       console.error(`Error while sending websocket event. Error: '${err}'`);
     }

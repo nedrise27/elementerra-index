@@ -1,6 +1,4 @@
-import { Model, Column, Table, HasMany, DataType } from 'sequelize-typescript';
-
-import { Element } from './Element.model';
+import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
 @Table({ tableName: 'forge_attempts', underscored: true, timestamps: false })
 export class ForgeAttempt extends Model {
@@ -22,9 +20,9 @@ export class ForgeAttempt extends Model {
   @Column
   hasFailed: boolean;
 
-  @Column({ type: DataType.ARRAY(DataType.STRING) })
-  addToPendingGuesses: string[];
+  @Column
+  guessAddress: string;
 
-  @HasMany(() => Element)
-  guess: Element[];
+  @Column({ type: DataType.ARRAY(DataType.STRING) })
+  guess: string[];
 }
