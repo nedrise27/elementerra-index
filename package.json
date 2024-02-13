@@ -23,6 +23,7 @@
     "migration:create": "sequelize migration:create"
   },
   "dependencies": {
+    "@coral-xyz/borsh": "^0.29.0",
     "@nestjs/axios": "^3.0.1",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.1.1",
@@ -31,6 +32,8 @@
     "@nestjs/schedule": "^4.0.1",
     "@nestjs/sequelize": "^10.0.0",
     "@nestjs/swagger": "^7.2.0",
+    "@solana/web3.js": "^1.90.0",
+    "@types/bn.js": "^5.1.5",
     "axios": "^1.6.7",
     "express": "^4.18.2",
     "helius-sdk": "^1.2.3",
