@@ -2,13 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as _ from 'lodash';
 import { Op } from 'sequelize';
-import { EventsGateway } from './events.gateway';
 import { ELEMENTS, ElementName, cleanAndOrderRecipe } from './lib/elements';
 import { Element, ForgeAttempt } from './models';
 import { Recipe } from './models/Recipe';
 import { GetAvailableRecipesRequestElement } from './requests/GetAvailableRecipesRequest';
 import { CheckRecipeResponse } from './responses/CheckRecipeResponse';
 import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResponse';
+import { sendWebsocketEvent } from './lib/events';
 
 @Injectable()
 export class RecipesService {
@@ -17,7 +17,6 @@ export class RecipesService {
     private readonly elementModel: typeof Element,
     @InjectModel(Recipe)
     private readonly recipeModel: typeof Recipe,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   public async checkRecipe(elements: string[]): Promise<CheckRecipeResponse> {
@@ -185,10 +184,14 @@ export class RecipesService {
       msg = `Forged ['${elements.join("', '")}']`;
     }
 
-    this.eventsGateway.sendEvent(
-      forgeAttempt.timestamp,
-      forgeAttempt.guesser,
-      msg,
-    );
+    try {
+      await sendWebsocketEvent(
+        forgeAttempt.timestamp,
+        forgeAttempt.guesser,
+        msg,
+      );
+    } catch (err) {
+      console.error(`Error while sending websocket event. Error: '${err}'`);
+    }
   }
 }
