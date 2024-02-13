@@ -82,7 +82,7 @@ export class ForgeAttemptsService {
       return;
     }
 
-    await asyncSleep(500);
+    await asyncSleep(2000);
     console.log(`Trying to fetch guess ${guessAddress} ${depth} times`);
     return this.pollGuess(guessAddress, depth + 1);
   }
