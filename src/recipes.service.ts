@@ -1,11 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { BN } from 'bn.js';
 import { Guess } from 'clients/elementerra-program/accounts';
 import * as _ from 'lodash';
 import { Op } from 'sequelize';
 import { ELEMENTS, ElementName, cleanAndOrderRecipe } from './lib/elements';
-import { sendWebsocketEvent } from './lib/events';
 import { Element } from './models';
 import { GuessModel } from './models/Guess.model';
 import { GetAvailableRecipesRequestElement } from './requests/GetAvailableRecipesRequest';
@@ -155,12 +153,7 @@ export class RecipesService {
     }
   }
 
-  public async checkAndUpdateRecipes(
-    guesser: string,
-    timestamp: number,
-    guess: Guess,
-    guessAddress: string,
-  ) {
+  public async checkAndUpdateRecipes(guess: Guess, guessAddress: string) {
     const guessedRecipe = [
       guess.elementTried1Name,
       guess.elementTried2Name,
@@ -170,38 +163,14 @@ export class RecipesService {
 
     const recipe = cleanAndOrderRecipe(guessedRecipe);
 
-    const foundRecipe = await this.guessModel.findOne({ where: { recipe } });
-
-    let msg: string | undefined;
-    let created: null | boolean;
-
-    if (_.isNil(foundRecipe)) {
-      const res = await this.guessModel.upsert({
-        address: guessAddress,
-        seasonNumber: guess.seasonNumber,
-        numberOfTimesTried: guess.numberOfTimesTried.toNumber(),
-        isSuccess: guess.isSuccess,
-        element: guess.element.toString(),
-        recipe,
-        creator: guess.creator.toString(),
-      });
-      created = res[1];
-    }
-
-    if (guess.numberOfTimesTried === new BN(1)) {
-      msg = `Tried a new recipe ['${recipe.join("', '")}'] and ${guess.isSuccess ? 'SUCCEEDED! ^.^' : 'FAILED -.-'}`;
-
-      console.log(`${guesser} ${msg}`);
-    } else {
-      msg = `Forged ['${recipe.join("', '")}']`;
-    }
-
-    try {
-      if (created) {
-        await sendWebsocketEvent(timestamp, guesser, msg);
-      }
-    } catch (err) {
-      console.error(`Error while sending websocket event. Error: '${err}'`);
-    }
+    await this.guessModel.upsert({
+      address: guessAddress,
+      seasonNumber: guess.seasonNumber,
+      numberOfTimesTried: guess.numberOfTimesTried.toNumber(),
+      isSuccess: guess.isSuccess,
+      element: guess.element.toString(),
+      recipe,
+      creator: guess.creator.toString(),
+    });
   }
 }

@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PublicKey } from '@solana/web3.js';
+import BN from 'bn.js';
 import { Guess } from 'clients/elementerra-program/accounts';
 import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
 import { cleanAndOrderRecipe } from './lib/elements';
+import { sendWebsocketEvent } from './lib/events';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
@@ -99,14 +101,14 @@ export class ForgeAttemptsService {
     guessAddress: string,
     guess: Guess,
   ) {
-    const elements = cleanAndOrderRecipe([
+    const recipe = cleanAndOrderRecipe([
       guess.elementTried1Name,
       guess.elementTried2Name,
       guess.elementTried3Name,
       guess.elementTried4Name,
     ]);
 
-    const promises: Promise<any>[] = [
+    const [[, created]] = await Promise.all([
       this.forgeAttemptModel.upsert({
         tx: transaction.tx,
         timestamp: transaction.timestamp,
@@ -114,21 +116,31 @@ export class ForgeAttemptsService {
         guesser: transaction.feePayer,
         hasFailed: !guess.isSuccess,
         guessAddress,
-        guess: elements,
+        guess: recipe,
       }),
-    ];
+      this.recipesService.checkAndUpdateRecipes(guess, guessAddress),
+    ]);
 
-    if (!_.isNil(guess)) {
-      promises.push(
-        this.recipesService.checkAndUpdateRecipes(
-          transaction.feePayer,
-          transaction.timestamp,
-          guess,
-          guessAddress,
-        ),
-      );
+    let msg: string | undefined;
+
+    if (guess.numberOfTimesTried === new BN(1)) {
+      msg = `Tried a new recipe ['${recipe.join("', '")}'] and ${guess.isSuccess ? 'SUCCEEDED! ^.^' : 'FAILED -.-'}`;
+
+      console.log(`${transaction.feePayer} ${msg}`);
+    } else {
+      msg = `Forged ['${recipe.join("', '")}']`;
     }
 
-    await Promise.all(promises);
+    if (created) {
+      try {
+        await sendWebsocketEvent(
+          transaction.timestamp,
+          transaction.feePayer,
+          msg,
+        );
+      } catch (err) {
+        console.error(`Error while sending websocket event. Error: '${err}'`);
+      }
+    }
   }
 }
