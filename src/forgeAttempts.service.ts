@@ -12,6 +12,7 @@ import { sendWebsocketEvent } from './lib/events';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
+import { asyncSleep } from './lib/util';
 
 @Injectable()
 export class ForgeAttemptsService {
@@ -77,16 +78,24 @@ export class ForgeAttemptsService {
 
     const guessAddress = claimInstruction.accounts[12];
 
-    const guess = await Guess.fetch(
+    let guess = await Guess.fetch(
       this.heliusService.connection,
       new PublicKey(guessAddress),
     );
 
     if (_.isNil(guess)) {
-      console.error(
-        `Could not find guess account for claim transaction ${transactionHistory.tx}`,
+      await asyncSleep(1000);
+
+      guess = await Guess.fetch(
+        this.heliusService.connection,
+        new PublicKey(guessAddress),
       );
-      return;
+      if (_.isNil(guess)) {
+        console.error(
+          `Could not find guess account for claim transaction ${transactionHistory.tx}`,
+        );
+        return;
+      }
     }
 
     return this.processTransactionAndGuess(
