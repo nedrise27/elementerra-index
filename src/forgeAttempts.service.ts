@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PublicKey } from '@solana/web3.js';
-import BN from 'bn.js';
 import { Guess } from 'clients/elementerra-program/accounts';
 import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
@@ -9,10 +8,10 @@ import { HeliusService } from './helius.service';
 import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
 import { cleanAndOrderRecipe } from './lib/elements';
 import { sendWebsocketEvent } from './lib/events';
+import { asyncSleep } from './lib/util';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
-import { asyncSleep } from './lib/util';
 
 @Injectable()
 export class ForgeAttemptsService {
@@ -60,6 +59,34 @@ export class ForgeAttemptsService {
     return foundForgeAttempts.map((f) => new ForgeAttemptResponse(f));
   }
 
+  public async pollGuess(
+    guessAddress: string,
+    depth: number,
+  ): Promise<Guess | undefined> {
+    let guess: Guess | undefined;
+
+    try {
+      guess = await Guess.fetch(
+        this.heliusService.connection,
+        new PublicKey(guessAddress),
+      );
+    } catch (err) {
+      console.error(`Error fetching guess ${guessAddress}`);
+    }
+
+    if (!_.isNil(guess)) {
+      return guess;
+    }
+
+    if (depth >= 10) {
+      return;
+    }
+
+    await asyncSleep(500);
+    console.log(`Trying to fetch guess ${guessAddress} ${depth} times`);
+    return this.pollGuess(guessAddress, depth + 1);
+  }
+
   public async processTransaction(transactionHistory: TransactionHistory) {
     if (!transactionHistory.containsClaimInstruction) {
       return;
@@ -78,24 +105,13 @@ export class ForgeAttemptsService {
 
     const guessAddress = claimInstruction.accounts[12];
 
-    let guess = await Guess.fetch(
-      this.heliusService.connection,
-      new PublicKey(guessAddress),
-    );
+    const guess = await this.pollGuess(guessAddress, 0);
 
     if (_.isNil(guess)) {
-      await asyncSleep(1000);
-
-      guess = await Guess.fetch(
-        this.heliusService.connection,
-        new PublicKey(guessAddress),
+      console.error(
+        `Could not find guess account for claim transaction ${transactionHistory.tx}`,
       );
-      if (_.isNil(guess)) {
-        console.error(
-          `Could not find guess account for claim transaction ${transactionHistory.tx}`,
-        );
-        return;
-      }
+      return;
     }
 
     return this.processTransactionAndGuess(
