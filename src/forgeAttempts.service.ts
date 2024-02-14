@@ -156,7 +156,9 @@ export class ForgeAttemptsService {
       msg = `Forged ['${recipe.join("', '")}']`;
     }
 
-    if (created) {
+    const thresholdTimestamp = (new Date().getTime() / 1000) - 60;
+
+    if (transaction.timestamp > thresholdTimestamp) {
       try {
         await sendWebsocketEvent(
           transaction.timestamp,
