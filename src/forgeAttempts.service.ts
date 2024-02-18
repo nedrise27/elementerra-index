@@ -6,13 +6,12 @@ import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
-import { cleanAndOrderRecipe } from './lib/elements';
-import { sendWebsocketEvent } from './lib/events';
+import { EventTopics, sendForgeEvent, sendWebsocketEvent } from './lib/events';
 import { asyncSleep } from './lib/util';
 import { ForgeAttempt, TransactionHistory } from './models';
+import { GuessModel } from './models/Guess.model';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
-import { GuessModel } from './models/Guess.model';
 
 @Injectable()
 export class ForgeAttemptsService {
@@ -143,7 +142,12 @@ export class ForgeAttemptsService {
       guessAddress,
       guess: guess.recipe,
     });
-    
+
+    const eventTopic =
+      guess.numberOfTimesTried === 1 && guess.isSuccess
+        ? EventTopics.inventing
+        : EventTopics.forging;
+
     let msg: string | undefined;
 
     if (guess.numberOfTimesTried === 1) {
@@ -162,6 +166,12 @@ export class ForgeAttemptsService {
           transaction.timestamp,
           transaction.feePayer,
           msg,
+        );
+        await sendForgeEvent(
+          eventTopic,
+          transaction.timestamp,
+          transaction.feePayer,
+          guess,
         );
       } catch (err) {
         console.error(`Error while sending websocket event. Error: '${err}'`);

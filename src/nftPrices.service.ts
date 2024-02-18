@@ -1,6 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/sequelize';
 import * as _ from 'lodash';
 import { lastValueFrom } from 'rxjs';
@@ -47,7 +47,7 @@ export class NftPricesService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  @Cron("0 */4 * * * *")
+  @Cron('0 */4 * * * *')
   async fetchRabbitPrice() {
     if (process.env.NO_CRON) {
       return;
