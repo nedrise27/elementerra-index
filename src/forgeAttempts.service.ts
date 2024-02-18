@@ -6,18 +6,25 @@ import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
-import { EventTopics, sendForgeEvent, sendWebsocketEvent } from './lib/events';
+import {
+  EventTopics,
+  ForgeEvent,
+  sendForgeEvent,
+  sendWebsocketEvent,
+} from './lib/events';
 import { asyncSleep } from './lib/util';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { GuessModel } from './models/Guess.model';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
+import { ElementsService } from './elements.service';
 
 @Injectable()
 export class ForgeAttemptsService {
   constructor(
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
+    private readonly elementsService: ElementsService,
     private readonly heliusService: HeliusService,
     private readonly recipesService: RecipesService,
   ) {}
@@ -167,7 +174,7 @@ export class ForgeAttemptsService {
           transaction.feePayer,
           msg,
         );
-        await sendForgeEvent(
+        await this.sendForgeEvent(
           eventTopic,
           transaction.timestamp,
           transaction.feePayer,
@@ -177,5 +184,40 @@ export class ForgeAttemptsService {
         console.error(`Error while sending websocket event. Error: '${err}'`);
       }
     }
+  }
+
+  private async sendForgeEvent(
+    eventTopic: EventTopics,
+    timestamp: number,
+    user: string,
+    guess: GuessModel,
+  ) {
+    const foundElement = await this.elementsService.findOrFetchAndSaveElement(
+      guess.element,
+    );
+
+    const event: ForgeEvent = {
+      eventTopic,
+      timestamp,
+      user,
+      element: foundElement?.name ? foundElement.name : guess.element,
+      recipe: guess.recipe as [string, string, string, string],
+    };
+
+    console.log(
+      `Send event: ${JSON.stringify(event, null, 0)} to elementerra-events`,
+    );
+
+    return fetch(
+      `${process.env.WEBSOCKET_API_URL.replace(/\/$/, '')}/send-event`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: process.env.PAIN_TEXT_PASSWORD,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(event),
+      },
+    );
   }
 }
