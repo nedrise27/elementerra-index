@@ -133,7 +133,7 @@ export class ForgeAttemptsService {
       guess.elementTried4Name,
     ]);
 
-    const [[, created]] = await Promise.all([
+    await Promise.all([
       this.forgeAttemptModel.upsert({
         tx: transaction.tx,
         timestamp: transaction.timestamp,
@@ -156,7 +156,7 @@ export class ForgeAttemptsService {
       msg = `Forged ['${recipe.join("', '")}']`;
     }
 
-    const thresholdTimestamp = (new Date().getTime() / 1000) - 60;
+    const thresholdTimestamp = new Date().getTime() / 1000 - 60;
 
     if (transaction.timestamp > thresholdTimestamp) {
       try {
