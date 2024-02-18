@@ -17,7 +17,8 @@ export class NftPricesService {
   ) {}
 
   MAGIC_EDEN_BASE_URL = 'https://api-mainnet.magiceden.dev/v2';
-  MAGIC_EDEN_RATE_LIMIT = 2000;
+  MAGIC_EDEN_RATE_LIMIT = 200;
+  MAGIC_EDEN_BEARER_TOKEN = process.env.MAGIC_EDEN_API_KEY;
   CRYSTAL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   CHEST_TIERS = [1, 2, 3, 4, 5, 6, 7];
 
@@ -46,7 +47,7 @@ export class NftPricesService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  @Cron('0 */2 * * * *')
+  @Cron('0 * * * * *')
   async fetchRabbitPrice() {
     if (process.env.NO_CRON) {
       return;
@@ -67,10 +68,21 @@ export class NftPricesService {
     }
   }
 
+  private get bearerTokenHeader() {
+    return {
+      Authorization: `Bearer ${this.MAGIC_EDEN_BEARER_TOKEN}`,
+    };
+  }
+
   private async fetchAndSaveRabbitPrice() {
     const res = await lastValueFrom(
       this.httpService.get(
         `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_rabbits/listings?limit=1&listingAggMode=true`,
+        {
+          headers: {
+            ...this.bearerTokenHeader,
+          },
+        },
       ),
     );
     const first: any = _.first(res.data);
@@ -82,6 +94,11 @@ export class NftPricesService {
     const res = await lastValueFrom(
       this.httpService.get(
         `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_crystals/listings?limit=1&listingAggMode=true&attributes=[[{"traitType":"level", "value":"${level}"}]]`,
+        {
+          headers: {
+            ...this.bearerTokenHeader,
+          },
+        },
       ),
     );
     const first: any = _.first(res.data);
@@ -93,6 +110,11 @@ export class NftPricesService {
     const res = await lastValueFrom(
       this.httpService.get(
         `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_chests/listings?limit=1&listingAggMode=true&attributes=[[{"traitType":"tier", "value":"${tier}"}]]`,
+        {
+          headers: {
+            ...this.bearerTokenHeader,
+          },
+        },
       ),
     );
     const first: any = _.first(res.data);

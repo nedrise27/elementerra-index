@@ -14,6 +14,7 @@ RELATIONAL_DATABASE_HOST='__RELATIONAL_DATABASE_HOST__' \
   PAIN_TEXT_PASSWORD='__PAIN_TEXT_PASSWORD__' \
   HELIUS_API_KEY='__HELIUS_API_KEY__' \
   WEBSOCKET_API_URL='__WEBSOCKET_API_URL__' \
+  MAGIC_EDEN_API_KEY='__MAGIC_EDEN_API_KEY__' \
   /home/admin/.local/bin/pm2 \
   restart ~/services/elementerra-index/pm2.config.js \
   --update-env

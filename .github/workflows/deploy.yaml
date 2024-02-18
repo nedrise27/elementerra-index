@@ -32,6 +32,7 @@ jobs:
             -e "s|__PAIN_TEXT_PASSWORD__|${{ secrets.PAIN_TEXT_PASSWORD }}|g" \
             -e "s|__HELIUS_API_KEY__|${{ secrets.HELIUS_API_KEY }}|g" \
             -e "s|__WEBSOCKET_API_URL__|${{ secrets.WEBSOCKET_API_URL }}|g" \
+            -e "s|__MAGIC_EDEN_API_KEY__|${{ secrets.MAGIC_EDEN_API_KEY }}|g" \
             pull_and_deploy.sh
 
       - name: Trigger deployment on host
