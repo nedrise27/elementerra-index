@@ -12,6 +12,7 @@ import { asyncSleep } from './lib/util';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
+import { GuessModel } from './models/Guess.model';
 
 @Injectable()
 export class ForgeAttemptsService {
@@ -62,7 +63,7 @@ export class ForgeAttemptsService {
   public async pollGuess(
     guessAddress: string,
     depth: number,
-  ): Promise<Guess | undefined> {
+  ): Promise<GuessModel | undefined> {
     let guess: Guess | undefined;
 
     await asyncSleep(_.random(100, 1000, false));
@@ -77,7 +78,7 @@ export class ForgeAttemptsService {
     }
 
     if (!_.isNil(guess)) {
-      return guess;
+      return GuessModel.fromGuess(guessAddress, guess);
     }
 
     if (depth >= 10) {
@@ -107,12 +108,10 @@ export class ForgeAttemptsService {
 
     const guessAddress = claimInstruction.accounts[12];
 
-    const foundGuess = await this.recipesService.getGuess(guessAddress);
-    if (!_.isNil(foundGuess)) {
-      return;
+    let guess = await this.recipesService.getGuess(guessAddress);
+    if (!_.isNil(guess)) {
+      guess = await this.pollGuess(guessAddress, 0);
     }
-
-    const guess = await this.pollGuess(guessAddress, 0);
 
     if (_.isNil(guess)) {
       console.error(
@@ -131,15 +130,8 @@ export class ForgeAttemptsService {
   public async processTransactionAndGuess(
     transaction: TransactionHistory,
     guessAddress: string,
-    guess: Guess,
+    guess: GuessModel,
   ) {
-    const recipe = cleanAndOrderRecipe([
-      guess.elementTried1Name,
-      guess.elementTried2Name,
-      guess.elementTried3Name,
-      guess.elementTried4Name,
-    ]);
-
     await Promise.all([
       this.forgeAttemptModel.upsert({
         tx: transaction.tx,
@@ -148,19 +140,19 @@ export class ForgeAttemptsService {
         guesser: transaction.feePayer,
         hasFailed: !guess.isSuccess,
         guessAddress,
-        guess: recipe,
+        guess: guess.recipe,
       }),
-      this.recipesService.checkAndUpdateRecipes(guess, guessAddress),
+      this.recipesService.upsertGuess(guess),
     ]);
 
     let msg: string | undefined;
 
-    if (guess.numberOfTimesTried.toNumber() === 1) {
-      msg = `Tried a new recipe ['${recipe.join("', '")}'] and ${guess.isSuccess ? 'SUCCEEDED! ^.^' : 'FAILED -.-'}`;
+    if (guess.numberOfTimesTried === 1) {
+      msg = `Tried a new recipe ['${guess.recipe.join("', '")}'] and ${guess.isSuccess ? 'SUCCEEDED! ^.^' : 'FAILED -.-'}`;
 
       console.log(`${transaction.feePayer} ${msg}`);
     } else {
-      msg = `Forged ['${recipe.join("', '")}']`;
+      msg = `Forged ['${guess.recipe.join("', '")}']`;
     }
 
     const thresholdTimestamp = new Date().getTime() / 1000 - 60;

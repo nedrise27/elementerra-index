@@ -26,6 +26,10 @@ export class RecipesService {
     }
   }
 
+  public async upsertGuess(guess: GuessModel) {
+    return this.guessModel.upsert({ ...guess });
+  }
+
   public async checkRecipe(recipe: string[]): Promise<CheckRecipeResponse> {
     const foundRecipe = await this.guessModel.findOne({ where: { recipe } });
 

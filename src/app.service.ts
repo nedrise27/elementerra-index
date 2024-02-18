@@ -20,6 +20,7 @@ import { RecipesService } from './recipes.service';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
+import { GuessModel } from './models/Guess.model';
 
 @Injectable()
 export class AppService {
@@ -141,12 +142,17 @@ export class AppService {
 
     await Promise.all(
       _.zip(transactions, guessAddresses, guesses).map(
-        ([tx, guessAddress, guess]) =>
-          this.forgeAttemptsService.processTransactionAndGuess(
-            tx,
+        ([tx, guessAddress, guess]) => {
+          const guessModel = GuessModel.fromGuess(
             guessAddress.toString(),
             guess,
-          ),
+          );
+          return this.forgeAttemptsService.processTransactionAndGuess(
+            tx,
+            guessAddress.toString(),
+            guessModel,
+          );
+        },
       ),
     );
 
