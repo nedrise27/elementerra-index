@@ -46,12 +46,19 @@ export async function sendForgeEvent(
     element: guess.element,
     recipe: guess.recipe as [string, string, string, string],
   };
-  return fetch(`${process.env.WEBSOCKET_API_URL}/send-event`, {
-    method: 'POST',
-    headers: {
-      authorization: process.env.PAIN_TEXT_PASSWORD,
-      'content-type': 'application/json',
+  console.log(
+    `Send event: ${JSON.stringify(event, null, 0)} to elementerra-events`,
+  );
+
+  return fetch(
+    `${process.env.WEBSOCKET_API_URL.replace(/\/$/, '')}/send-event`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: process.env.PAIN_TEXT_PASSWORD,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(event),
     },
-    body: JSON.stringify(event),
-  });
+  );
 }
