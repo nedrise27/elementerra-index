@@ -109,7 +109,7 @@ export class ForgeAttemptsService {
     const guessAddress = claimInstruction.accounts[12];
 
     let guess = await this.recipesService.getGuess(guessAddress);
-    if (!_.isNil(guess)) {
+    if (_.isNil(guess)) {
       guess = await this.pollGuess(guessAddress, 0);
     }
 
