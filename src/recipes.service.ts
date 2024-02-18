@@ -27,7 +27,15 @@ export class RecipesService {
   }
 
   public async upsertGuess(guess: GuessModel) {
-    return this.guessModel.upsert({ ...guess });
+    return this.guessModel.upsert({
+      address: guess.address,
+      seasonNumber: guess.seasonNumber,
+      numberOfTimesTried: guess.numberOfTimesTried,
+      isSuccess: guess.isSuccess,
+      element: guess.element,
+      recipe: guess.recipe,
+      creator: guess.creator,
+    });
   }
 
   public async checkRecipe(recipe: string[]): Promise<CheckRecipeResponse> {

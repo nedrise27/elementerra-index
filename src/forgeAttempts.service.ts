@@ -132,19 +132,18 @@ export class ForgeAttemptsService {
     guessAddress: string,
     guess: GuessModel,
   ) {
-    await Promise.all([
-      this.forgeAttemptModel.upsert({
-        tx: transaction.tx,
-        timestamp: transaction.timestamp,
-        slot: transaction.slot,
-        guesser: transaction.feePayer,
-        hasFailed: !guess.isSuccess,
-        guessAddress,
-        guess: guess.recipe,
-      }),
-      this.recipesService.upsertGuess(guess),
-    ]);
+    await this.recipesService.upsertGuess(guess);
 
+    await this.forgeAttemptModel.upsert({
+      tx: transaction.tx,
+      timestamp: transaction.timestamp,
+      slot: transaction.slot,
+      guesser: transaction.feePayer,
+      hasFailed: !guess.isSuccess,
+      guessAddress,
+      guess: guess.recipe,
+    });
+    
     let msg: string | undefined;
 
     if (guess.numberOfTimesTried === 1) {
