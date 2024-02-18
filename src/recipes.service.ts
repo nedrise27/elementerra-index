@@ -19,6 +19,13 @@ export class RecipesService {
     private readonly guessModel: typeof GuessModel,
   ) {}
 
+  public async getGuess(address: string): Promise<GuessModel | undefined> {
+    const foundGuess = await this.guessModel.findOne({ where: { address } });
+    if (!_.isNil(foundGuess)) {
+      return foundGuess;
+    }
+  }
+
   public async checkRecipe(recipe: string[]): Promise<CheckRecipeResponse> {
     const foundRecipe = await this.guessModel.findOne({ where: { recipe } });
 

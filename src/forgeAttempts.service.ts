@@ -64,8 +64,8 @@ export class ForgeAttemptsService {
     depth: number,
   ): Promise<Guess | undefined> {
     let guess: Guess | undefined;
-    
-    await asyncSleep(_.random(500, 2000, false));
+
+    await asyncSleep(_.random(100, 1000, false));
 
     try {
       guess = await Guess.fetch(
@@ -106,6 +106,11 @@ export class ForgeAttemptsService {
     }
 
     const guessAddress = claimInstruction.accounts[12];
+
+    const foundGuess = await this.recipesService.getGuess(guessAddress);
+    if (!_.isNil(foundGuess)) {
+      return;
+    }
 
     const guess = await this.pollGuess(guessAddress, 0);
 
