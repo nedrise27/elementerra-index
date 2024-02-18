@@ -64,6 +64,8 @@ export class ForgeAttemptsService {
     depth: number,
   ): Promise<Guess | undefined> {
     let guess: Guess | undefined;
+    
+    await asyncSleep(_.random(500, 2000, false));
 
     try {
       guess = await Guess.fetch(
