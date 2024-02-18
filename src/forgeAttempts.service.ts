@@ -144,10 +144,14 @@ export class ForgeAttemptsService {
       guess: guess.recipe,
     });
 
-    const eventTopic =
-      guess.numberOfTimesTried === 1 && guess.isSuccess
-        ? EventTopics.inventing
-        : EventTopics.forging;
+    let eventTopic = EventTopics.forging;
+    if (guess.numberOfTimesTried === 1) {
+      if (guess.isSuccess) {
+        eventTopic = EventTopics.inventing;
+      } else {
+        eventTopic = EventTopics.inventionAttempt;
+      }
+    }
 
     let msg: string | undefined;
 
