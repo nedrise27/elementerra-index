@@ -184,7 +184,7 @@ export class AppService {
       !_.isNil(transactionHistory) &&
       transactionHistory.containsClaimInstruction
     ) {
-      await this.forgeAttemptsService.processTransaction(transactionHistory);
+      this.forgeAttemptsService.processTransaction(transactionHistory);
     }
   }
 
