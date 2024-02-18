@@ -6,25 +6,19 @@ import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
-import {
-  EventTopics,
-  ForgeEvent,
-  sendForgeEvent,
-  sendWebsocketEvent,
-} from './lib/events';
+import { ELEMENTS_IDS } from './lib/elements';
+import { EventTopics, ForgeEvent, sendWebsocketEvent } from './lib/events';
 import { asyncSleep } from './lib/util';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { GuessModel } from './models/Guess.model';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
-import { ElementsService } from './elements.service';
 
 @Injectable()
 export class ForgeAttemptsService {
   constructor(
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
-    private readonly elementsService: ElementsService,
     private readonly heliusService: HeliusService,
     private readonly recipesService: RecipesService,
   ) {}
@@ -192,21 +186,14 @@ export class ForgeAttemptsService {
     user: string,
     guess: GuessModel,
   ) {
-    const foundElement = await this.elementsService.findOrFetchAndSaveElement(
-      guess.element,
-    );
-
     const event: ForgeEvent = {
       eventTopic,
       timestamp,
       user,
-      element: foundElement?.name ? foundElement.name : guess.element,
+      element: ELEMENTS_IDS[guess.element],
+      isSuccess: guess.isSuccess,
       recipe: guess.recipe as [string, string, string, string],
     };
-
-    console.log(
-      `Send event: ${JSON.stringify(event, null, 0)} to elementerra-events`,
-    );
 
     return fetch(
       `${process.env.WEBSOCKET_API_URL.replace(/\/$/, '')}/send-event`,

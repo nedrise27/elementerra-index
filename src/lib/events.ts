@@ -1,5 +1,3 @@
-import { GuessModel } from 'src/models/Guess.model';
-
 export enum EventTopics {
   forging = 'forging',
   inventing = 'inventing',
@@ -11,6 +9,7 @@ export class ForgeEvent {
   user: string;
   event?: any;
   element: string;
+  isSuccess: boolean;
   recipe: [string, string, string, string];
 }
 
@@ -31,34 +30,4 @@ export async function sendWebsocketEvent(
       event,
     }),
   });
-}
-
-export async function sendForgeEvent(
-  eventTopic: EventTopics,
-  timestamp: number,
-  user: string,
-  guess: GuessModel,
-) {
-  const event: ForgeEvent = {
-    eventTopic,
-    timestamp,
-    user,
-    element: guess.element,
-    recipe: guess.recipe as [string, string, string, string],
-  };
-  console.log(
-    `Send event: ${JSON.stringify(event, null, 0)} to elementerra-events`,
-  );
-
-  return fetch(
-    `${process.env.WEBSOCKET_API_URL.replace(/\/$/, '')}/send-event`,
-    {
-      method: 'POST',
-      headers: {
-        authorization: process.env.PAIN_TEXT_PASSWORD,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(event),
-    },
-  );
 }
