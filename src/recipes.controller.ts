@@ -11,6 +11,8 @@ import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResp
 @ApiTags('Recipes')
 @Controller('recipes')
 export class RecipesController {
+  MAX_ELEMENT_COMBINATION = 10;
+
   constructor(private readonly recipesService: RecipesService) {}
 
   @Post('check-recipe')
@@ -31,6 +33,12 @@ export class RecipesController {
     @Body() request: GetAvailableRecipesRequest,
   ): Promise<GetAvailableRecipesResponse> {
     this.checkElementNames(request.elements?.map((e) => e.element));
+
+    if (request.elements.length > this.MAX_ELEMENT_COMBINATION) {
+      throw new BadRequestException(
+        `Pleas provide at most ${this.MAX_ELEMENT_COMBINATION}`,
+      );
+    }
 
     return this.recipesService.getAvailableRecipes(
       request.elements,
