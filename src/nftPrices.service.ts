@@ -75,51 +75,69 @@ export class NftPricesService {
   }
 
   private async fetchAndSaveRabbitPrice() {
-    const res = await lastValueFrom(
-      this.httpService.get(
-        `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_rabbits/listings?limit=1&listingAggMode=true`,
-        {
-          headers: {
-            ...this.bearerTokenHeader,
+    try {
+      const res = await lastValueFrom(
+        this.httpService.get(
+          `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_rabbits/listings?limit=1&listingAggMode=true`,
+          {
+            headers: {
+              ...this.bearerTokenHeader,
+            },
           },
-        },
-      ),
-    );
-    const first: any = _.first(res.data);
+        ),
+      );
+      const first: any = _.first(res.data);
 
-    await this.saveNftListingResponse(first, 0);
+      await this.saveNftListingResponse(first, 0);
+    } catch (err) {
+      console.error(
+        `Error while fetching and saving rabbit price. Error: ${err}`,
+      );
+    }
   }
 
   private async fetchAndSaveCrystalPrice(level: number) {
-    const res = await lastValueFrom(
-      this.httpService.get(
-        `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_crystals/listings?limit=1&listingAggMode=true&attributes=[[{"traitType":"level", "value":"${level}"}]]`,
-        {
-          headers: {
-            ...this.bearerTokenHeader,
+    try {
+      const res = await lastValueFrom(
+        this.httpService.get(
+          `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_crystals/listings?limit=1&listingAggMode=true&attributes=[[{"traitType":"level", "value":"${level}"}]]`,
+          {
+            headers: {
+              ...this.bearerTokenHeader,
+            },
           },
-        },
-      ),
-    );
-    const first: any = _.first(res.data);
+        ),
+      );
+      const first: any = _.first(res.data);
 
-    await this.saveNftListingResponse(first, level);
+      await this.saveNftListingResponse(first, level);
+    } catch (err) {
+      console.error(
+        `Error while fetching and saving crystal price. Error: ${err}`,
+      );
+    }
   }
 
   private async fetchAndSaveChestPrice(tier: number) {
-    const res = await lastValueFrom(
-      this.httpService.get(
-        `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_chests/listings?limit=1&listingAggMode=true&attributes=[[{"traitType":"tier", "value":"${tier}"}]]`,
-        {
-          headers: {
-            ...this.bearerTokenHeader,
+    try {
+      const res = await lastValueFrom(
+        this.httpService.get(
+          `${this.MAGIC_EDEN_BASE_URL}/collections/elementerra_chests/listings?limit=1&listingAggMode=true&attributes=[[{"traitType":"tier", "value":"${tier}"}]]`,
+          {
+            headers: {
+              ...this.bearerTokenHeader,
+            },
           },
-        },
-      ),
-    );
-    const first: any = _.first(res.data);
+        ),
+      );
+      const first: any = _.first(res.data);
 
-    await this.saveNftListingResponse(first, tier);
+      await this.saveNftListingResponse(first, tier);
+    } catch (err) {
+      console.error(
+        `Error while fetching and saving chests price. Error: ${err}`,
+      );
+    }
   }
 
   private async saveNftListingResponse(res: any, level: number) {
