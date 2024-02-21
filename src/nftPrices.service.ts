@@ -124,13 +124,30 @@ export class NftPricesService {
 
   private async saveNftListingResponse(res: any, level: number) {
     if (!_.isNil(res)) {
-      await this.nftPriceModel.create({
-        mint: res.tokenMint,
-        collection: res.token.collection,
-        level,
-        priceInSol: res.price,
-        timestamp: Math.floor(new Date().getTime() / 1000),
+      const found = await this.nftPriceModel.findOne({
+        where: {
+          mint: res.tokenMint,
+          collection: res.token.collection,
+          level,
+        },
       });
+      if (!_.isNil(found)) {
+        await this.nftPriceModel.update(
+          {
+            priceInSol: res.price,
+            timestamp: Math.floor(new Date().getTime() / 1000),
+          },
+          { where: { id: found.id } },
+        );
+      } else {
+        await this.nftPriceModel.create({
+          mint: res.tokenMint,
+          collection: res.token.collection,
+          level,
+          priceInSol: res.price,
+          timestamp: Math.floor(new Date().getTime() / 1000),
+        });
+      }
     }
   }
 }
