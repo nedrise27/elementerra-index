@@ -7,7 +7,7 @@ import { Op, Order } from 'sequelize';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
 import { ELEMENTS_IDS } from './lib/elements';
-import { EventTopics, ForgeEvent, sendWebsocketEvent } from './lib/events';
+import { EventTopics, ForgeEvent } from './lib/events';
 import { asyncSleep } from './lib/util';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { GuessModel } from './models/Guess.model';
@@ -142,37 +142,25 @@ export class ForgeAttemptsService {
     });
 
     let eventTopic = EventTopics.forging;
+    let user = transaction.feePayer;
+
     if (guess.numberOfTimesTried === 1) {
       if (guess.isSuccess) {
         eventTopic = EventTopics.inventing;
+        user = guess.creator;
       } else {
         eventTopic = EventTopics.inventionAttempt;
       }
-    }
-
-    let msg: string | undefined;
-
-    if (guess.numberOfTimesTried === 1) {
-      msg = `Tried a new recipe ['${guess.recipe.join("', '")}'] and ${guess.isSuccess ? 'SUCCEEDED! ^.^' : 'FAILED -.-'}`;
-
-      console.log(`${transaction.feePayer} ${msg}`);
-    } else {
-      msg = `Forged ['${guess.recipe.join("', '")}']`;
     }
 
     const thresholdTimestamp = new Date().getTime() / 1000 - 60;
 
     if (transaction.timestamp > thresholdTimestamp) {
       try {
-        await sendWebsocketEvent(
-          transaction.timestamp,
-          transaction.feePayer,
-          msg,
-        );
         await this.sendForgeEvent(
           eventTopic,
           transaction.timestamp,
-          transaction.feePayer,
+          user,
           guess,
         );
       } catch (err) {
