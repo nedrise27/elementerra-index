@@ -89,8 +89,6 @@ export class AdministrativeController {
     @Body() request: ConfigureEventsRequest,
   ): Promise<ConfigureEventsResponse> {
     checkAuthHeader(authHeader);
-
-    console.log(request);
     return this.eventsService.configureEvents(request);
   }
 }
