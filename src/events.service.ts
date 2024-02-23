@@ -53,7 +53,7 @@ export class EventsService {
       user,
       element: ELEMENTS_IDS[guess.element],
       isSuccess: guess.isSuccess,
-      preferHidden: _.isNil(configuration) || !configuration.enableEvents,
+      preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
       recipe: guess.recipe as [string, string, string, string],
     };
 
