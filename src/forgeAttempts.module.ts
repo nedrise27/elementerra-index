@@ -6,6 +6,7 @@ import { ElementsModule } from './elements.module';
 import { HeliusModule } from './helius.module';
 import { Element, ForgeAttempt, TransactionHistory } from './models';
 import { RecipesModule } from './recipes.module';
+import { EventsModule } from './events.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { RecipesModule } from './recipes.module';
     ElementsModule,
     HeliusModule,
     RecipesModule,
+    EventsModule,
   ],
   providers: [ForgeAttemptsService],
   controllers: [ForgeAttemptsController],

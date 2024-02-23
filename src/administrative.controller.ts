@@ -11,13 +11,19 @@ import {
 } from './requests/ReplayForgeAttemptsRequest';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 import { ReplayResponse } from './responses/ReplayResponse';
+import { ConfigureEventsRequest } from './requests/ConfigureEventsRequest';
+import { ConfigureEventsResponse } from './responses/ConfigureEventsResponse';
+import { EventsService } from './events.service';
 
 @ApiTags('Administrative')
-@Controller('replay')
+@Controller('')
 export class AdministrativeController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly eventsService: EventsService,
+  ) {}
 
-  @Post('')
+  @Post('replay')
   public async replayTransactionHistory(
     @Headers('Authorization') authHeader: string,
     @Body() request: ReplayTransactionHistoryRequest,
@@ -39,7 +45,7 @@ export class AdministrativeController {
     return res;
   }
 
-  @Post('/forge-attempts')
+  @Post('/replay/forge-attempts')
   public async replayForgeAttempts(
     @Headers('Authorization') authHeader: string,
     @Body() request: ReplayForgeAttemptsRequest,
@@ -55,7 +61,7 @@ export class AdministrativeController {
     return res;
   }
 
-  @Post('/elements')
+  @Post('/replay/elements')
   public async replayElements(
     @Headers('Authorization') authHeader: string,
     @Body() request: ReplayElementsRequest,
@@ -70,10 +76,21 @@ export class AdministrativeController {
     return res;
   }
 
-  @Post('/recipes')
+  @Post('/replay/recipes')
   public async replayRecipes(@Headers('Authorization') authHeader: string) {
     checkAuthHeader(authHeader);
 
     return this.appService.replayRecipes();
+  }
+
+  @Post('/configure/events')
+  public async configureEvents(
+    @Headers('Authorization') authHeader: string,
+    @Body() request: ConfigureEventsRequest,
+  ): Promise<ConfigureEventsResponse> {
+    checkAuthHeader(authHeader);
+
+    console.log(request);
+    return this.eventsService.configureEvents(request);
   }
 }

@@ -13,6 +13,7 @@ import { ForgeAttempt, TransactionHistory } from './models';
 import { GuessModel } from './models/Guess.model';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
+import { EventsService } from './events.service';
 
 @Injectable()
 export class ForgeAttemptsService {
@@ -21,6 +22,7 @@ export class ForgeAttemptsService {
     private readonly forgeAttemptModel: typeof ForgeAttempt,
     private readonly heliusService: HeliusService,
     private readonly recipesService: RecipesService,
+    private readonly eventsService: EventsService,
   ) {}
 
   public async findOne(tx: string): Promise<ForgeAttemptResponse | undefined> {
@@ -157,7 +159,7 @@ export class ForgeAttemptsService {
 
     if (transaction.timestamp > thresholdTimestamp) {
       try {
-        await this.sendForgeEvent(
+        await this.eventsService.sendForgeEvent(
           eventTopic,
           transaction.timestamp,
           user,
@@ -167,33 +169,5 @@ export class ForgeAttemptsService {
         console.error(`Error while sending websocket event. Error: '${err}'`);
       }
     }
-  }
-
-  private async sendForgeEvent(
-    eventTopic: EventTopics,
-    timestamp: number,
-    user: string,
-    guess: GuessModel,
-  ) {
-    const event: ForgeEvent = {
-      eventTopic,
-      timestamp,
-      user,
-      element: ELEMENTS_IDS[guess.element],
-      isSuccess: guess.isSuccess,
-      recipe: guess.recipe as [string, string, string, string],
-    };
-
-    return fetch(
-      `${process.env.WEBSOCKET_API_URL.replace(/\/$/, '')}/send-event`,
-      {
-        method: 'POST',
-        headers: {
-          authorization: process.env.PAIN_TEXT_PASSWORD,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(event),
-      },
-    );
   }
 }

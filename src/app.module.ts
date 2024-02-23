@@ -6,6 +6,7 @@ import { AdministrativeController } from './administrative.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ElementsModule } from './elements.module';
+import { EventsModule } from './events.module';
 import { ForgeAttemptsModule } from './forgeAttempts.module';
 import { HeliusModule } from './helius.module';
 import {
@@ -37,6 +38,7 @@ import { WebhookController } from './webhook.controller';
     ElementsModule,
     RecipesModule,
     NftPricesModule,
+    EventsModule,
   ],
   controllers: [AppController, WebhookController, AdministrativeController],
   providers: [AppService],
