@@ -11,5 +11,6 @@ export class ForgeEvent {
   event?: any;
   element: string;
   isSuccess: boolean;
+  preferHidden: boolean;
   recipe: [string, string, string, string];
 }

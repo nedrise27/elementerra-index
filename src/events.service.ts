@@ -46,10 +46,6 @@ export class EventsService {
     const configuration = await this.eventsConfigurationModel.findOne({
       where: { guesser: user },
     });
-    if (!_.isNil(configuration) && !configuration.enableEvents) {
-      console.log(`Will not send forge event for user '${user}'`);
-      return;
-    }
 
     const event: ForgeEvent = {
       eventTopic,
@@ -57,6 +53,7 @@ export class EventsService {
       user,
       element: ELEMENTS_IDS[guess.element],
       isSuccess: guess.isSuccess,
+      preferHidden: _.isNil(configuration) || !configuration.enableEvents,
       recipe: guess.recipe as [string, string, string, string],
     };
 
