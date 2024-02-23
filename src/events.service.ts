@@ -47,6 +47,7 @@ export class EventsService {
       where: { guesser: user },
     });
     if (!_.isNil(configuration) && !configuration.enableEvents) {
+      console.log(`Will not send forge event for user '${user}'`);
       return;
     }
 
