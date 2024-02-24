@@ -11,7 +11,7 @@ import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResp
 @ApiTags('Recipes')
 @Controller('recipes')
 export class RecipesController {
-  MAX_ELEMENT_COMBINATION = 10;
+  MAX_ELEMENT_COMBINATION = 50;
 
   constructor(private readonly recipesService: RecipesService) {}
 

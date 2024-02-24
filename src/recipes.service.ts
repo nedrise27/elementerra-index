@@ -59,7 +59,10 @@ export class RecipesService {
     const requiredTier = tier - 1;
 
     const requiredTierElements = requestedElements
-      .map((r) => ELEMENTS.find((e) => e.name === r.element))
+      .map((r) => ({
+        ...r,
+        tier: ELEMENTS.find((e) => e.name === r.element).tier,
+      }))
       .filter((e) => e.tier === requiredTier);
 
     if (_.isNil(requiredTierElements) || _.isEmpty(requiredTierElements)) {
@@ -68,47 +71,66 @@ export class RecipesService {
       );
     }
 
-    let possibilities: ElementName[][] = [];
+    // let possibilities: ElementName[][] = [];
+    const possibilities: Record<string, Record<ElementName, number>> = {};
 
     for (const first of requiredTierElements) {
       for (const second of requestedElements) {
         for (const third of requestedElements) {
           for (const fourth of requestedElements) {
-            const possibility = [
-              first.name,
+            const possibility = this.countPossibility([
+              first.element,
               second.element,
               third.element,
               fourth.element,
-            ];
-            possibility.sort();
+            ]);
 
-            if (!possibilities.find((p) => _.isEqual(p, possibility))) {
-              possibilities.push(possibility);
+            if (
+              _.inRange(
+                possibility[first.element],
+                first.minAmount,
+                first.maxAmount,
+              ) &&
+              _.inRange(
+                possibility[second.element],
+                second.minAmount,
+                second.maxAmount,
+              ) &&
+              _.inRange(
+                possibility[third.element],
+                third.minAmount,
+                third.maxAmount,
+              ) &&
+              _.inRange(
+                possibility[fourth.element],
+                fourth.minAmount,
+                fourth.maxAmount,
+              )
+            ) {
+              const hash = this.hashPossibility(possibility);
+              possibilities[hash] = possibility;
             }
           }
         }
       }
     }
 
-    for (const requirement of requestedElements) {
-      possibilities = possibilities.filter((possibility) => {
-        const count = possibility.filter(
-          (p) => p === requirement.element,
-        ).length;
-
-        return _.inRange(
-          count,
-          requirement.minAmount,
-          requirement.maxAmount + 1,
-        );
-      });
-    }
+    const possibilitiesList = Object.values(possibilities).map(
+      this.unpackCountedPossibilities,
+    );
 
     const foundRecipes = await this.guessModel.findAll({
       where: {
-        recipe: { [Op.in]: possibilities },
+        recipe: {
+          [Op.in]: possibilitiesList,
+        },
       },
     });
+
+    for (const recipe of foundRecipes) {
+      const hash = this.hashPossibility(this.countPossibility(recipe.recipe));
+      delete possibilities[hash];
+    }
 
     const foundPossibilies = foundRecipes.map((r) => {
       const elements = r.recipe;
@@ -116,11 +138,46 @@ export class RecipesService {
       return elements;
     });
 
-    const res = possibilities.filter((p) =>
-      _.isNil(foundPossibilies.find((f) => _.isEqual(f, p))),
+    const res = Object.values(possibilities).map(
+      this.unpackCountedPossibilities,
     );
 
     return new GetAvailableRecipesResponse(res, foundPossibilies);
+  }
+
+  private hashPossibility(possibility: Record<string, number>): string {
+    const entries = Object.entries(possibility).map(
+      ([element, count]) => `${element}${count}`,
+    );
+    entries.sort();
+    return entries.join('');
+  }
+
+  private countPossibility(recipe: string[]): Record<string, number> {
+    const possibility: Record<string, number> = {};
+
+    for (const element of recipe) {
+      if (!_.has(possibility, element)) {
+        possibility[element] = 1;
+      } else {
+        possibility[element] += 1;
+      }
+    }
+
+    return possibility;
+  }
+
+  private unpackCountedPossibilities(
+    possibility: Record<string, number>,
+  ): string[] {
+    const unpacked = [];
+    for (const [element, count] of Object.entries(possibility)) {
+      for (let i = 0; i < count; i++) {
+        unpacked.push(element);
+      }
+    }
+    unpacked.sort();
+    return unpacked;
   }
 
   public async replay() {
