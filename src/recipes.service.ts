@@ -75,8 +75,6 @@ export class RecipesService {
       );
     }
 
-    console.log(requiredElements);
-
     // let possibilities: ElementName[][] = [];
     const possibilities: Record<string, Record<ElementName, number>> = {};
 
@@ -108,22 +106,22 @@ export class RecipesService {
               _.inRange(
                 possibility[first.element],
                 first.minAmount,
-                first.maxAmount,
+                first.maxAmount + 1,
               ) &&
               _.inRange(
                 possibility[second.element],
                 second.minAmount,
-                second.maxAmount,
+                second.maxAmount + 1,
               ) &&
               _.inRange(
                 possibility[third.element],
                 third.minAmount,
-                third.maxAmount,
+                third.maxAmount + 1,
               ) &&
               _.inRange(
                 possibility[fourth.element],
                 fourth.minAmount,
-                fourth.maxAmount,
+                fourth.maxAmount + 1,
               )
             ) {
               const hash = this.hashPossibility(possibility);
