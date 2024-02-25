@@ -65,6 +65,10 @@ export class RecipesService {
       }))
       .filter((e) => e.tier === requiredTier);
 
+    const requiredElements = requestedElements
+      .filter((request) => request.minAmount > 0)
+      .map((request) => request.element);
+
     if (_.isNil(requiredTierElements) || _.isEmpty(requiredTierElements)) {
       throw new BadRequestException(
         `For a tier ${tier} element we need at least one tier ${requiredTier} element.`,
@@ -78,12 +82,20 @@ export class RecipesService {
       for (const second of requestedElements) {
         for (const third of requestedElements) {
           for (const fourth of requestedElements) {
-            const possibility = this.countPossibility([
+            const p = [
               first.element,
               second.element,
               third.element,
               fourth.element,
-            ]);
+            ];
+
+            for (const requiredElement of requiredElements) {
+              if (!p.includes(requiredElement)) {
+                continue;
+              }
+            }
+
+            const possibility = this.countPossibility(p);
 
             if (
               _.inRange(
