@@ -75,6 +75,8 @@ export class RecipesService {
       );
     }
 
+    console.log(requiredElements);
+
     // let possibilities: ElementName[][] = [];
     const possibilities: Record<string, Record<ElementName, number>> = {};
 
@@ -89,11 +91,16 @@ export class RecipesService {
               fourth.element,
             ];
 
+            let containsAllRequired = true;
+
             for (const requiredElement of requiredElements) {
               if (!p.includes(requiredElement)) {
-                continue;
+                containsAllRequired = false;
+                break;
               }
             }
+
+            if (!containsAllRequired) continue;
 
             const possibility = this.countPossibility(p);
 
