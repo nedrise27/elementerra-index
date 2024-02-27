@@ -10,12 +10,3 @@ As always, take everything with a grain of salt.
 If you want to contribute just open an issue or write me an email: ned.rise.io@gmail.com
 
 Happy crafting!
-
-## Assertions about how the game works:
-
-if elementerra program gets called with data "J1gU5gpUd3E" => ClaimPendingGuess
-if elementerra program gets called with data starting with "FTDA" => AddToPendingGuess
-
-If any tokenTransfer where
-  toUserAccount == feePayer => successful
-  else unsuccessful
