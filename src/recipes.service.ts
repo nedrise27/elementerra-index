@@ -9,6 +9,7 @@ import { GuessModel } from './models/Guess.model';
 import { GetAvailableRecipesRequestElement } from './requests/GetAvailableRecipesRequest';
 import { CheckRecipeResponse } from './responses/CheckRecipeResponse';
 import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResponse';
+import { RecipeRequestLog } from './models/RecipeRequestLog';
 
 @Injectable()
 export class RecipesService {
@@ -17,6 +18,8 @@ export class RecipesService {
     private readonly elementModel: typeof Element,
     @InjectModel(GuessModel)
     private readonly guessModel: typeof GuessModel,
+    @InjectModel(RecipeRequestLog)
+    private readonly recipeRequestLogModel: typeof RecipeRequestLog,
   ) {}
 
   public async getGuess(address: string): Promise<GuessModel | undefined> {
@@ -39,6 +42,11 @@ export class RecipesService {
   }
 
   public async checkRecipe(recipe: string[]): Promise<CheckRecipeResponse> {
+    await this.recipeRequestLogModel.create({
+      elements: recipe,
+      timestamp: _.toInteger(new Date().getTime() / 1000),
+    });
+
     const foundRecipe = await this.guessModel.findOne({ where: { recipe } });
 
     let wasTried: boolean = false;
@@ -74,6 +82,11 @@ export class RecipesService {
         `For a tier ${tier} element we need at least one tier ${requiredTier} element.`,
       );
     }
+
+    await this.recipeRequestLogModel.create({
+      elements: requestedElements.map((e) => e.element),
+      timestamp: _.toInteger(new Date().getTime() / 1000),
+    });
 
     // let possibilities: ElementName[][] = [];
     const possibilities: Record<string, Record<ElementName, number>> = {};

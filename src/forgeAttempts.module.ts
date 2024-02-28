@@ -7,6 +7,7 @@ import { HeliusModule } from './helius.module';
 import { Element, ForgeAttempt, TransactionHistory } from './models';
 import { RecipesModule } from './recipes.module';
 import { EventsModule } from './events.module';
+import { RecipeRequestLog } from './models/RecipeRequestLog';
 
 @Module({
   imports: [
