@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       SSH_USER: admin
       SSH_KEY: ${{ secrets.ELEMENTERRA_ACTIONS_SSH_KEY }}
