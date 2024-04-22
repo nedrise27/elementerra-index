@@ -16,6 +16,7 @@ import {
 import { NftPricesModule } from './nftPrices.module';
 import { RecipesModule } from './recipes.module';
 import { WebhookController } from './webhook.controller';
+import { GuessesModule } from './guesses.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { WebhookController } from './webhook.controller';
     RecipesModule,
     NftPricesModule,
     EventsModule,
+    GuessesModule,
   ],
   controllers: [AppController, WebhookController, AdministrativeController],
   providers: [AppService],

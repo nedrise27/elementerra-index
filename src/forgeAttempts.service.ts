@@ -4,16 +4,15 @@ import { PublicKey } from '@solana/web3.js';
 import { Guess } from 'clients/elementerra-program/accounts';
 import * as _ from 'lodash';
 import { Op, Order } from 'sequelize';
+import { EventsService } from './events.service';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
-import { ELEMENTS_IDS } from './lib/elements';
-import { EventTopics, ForgeEvent } from './lib/events';
+import { EventTopics } from './lib/events';
 import { asyncSleep } from './lib/util';
 import { ForgeAttempt, TransactionHistory } from './models';
 import { GuessModel } from './models/Guess.model';
 import { RecipesService } from './recipes.service';
 import { ForgeAttemptResponse } from './responses/ForgeAttemptResponse';
-import { EventsService } from './events.service';
 
 @Injectable()
 export class ForgeAttemptsService {

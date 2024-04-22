@@ -24,6 +24,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('Forge Attempts')
     .addTag('Data')
+    .addTag('Guesses')
     .addTag('Administrative')
     .addTag('Stats')
     .build();
