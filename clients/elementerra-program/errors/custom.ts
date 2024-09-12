@@ -34,6 +34,34 @@ export type CustomError =
   | InvalidStakingType
   | InvalidTierType
   | InvalidReferral
+  | InvalidPackProvided
+  | InvalidCrystalProvided
+  | FluffleClaimNotEnabled
+  | FluffleAlreadyClaimed
+  | InvalidFluffleMint
+  | NotValidFluffleClaimValues
+  | TooManyRequirementsOrRewards
+  | InvalidTime
+  | TooManyMissions
+  | InvalidSeasonNumber
+  | LockedResources
+  | InvalidMissionStatus
+  | MissingRequirement
+  | StillHasRequirementsLeft
+  | InvalidMint
+  | InvalidProgram
+  | InvalidDrkeMint
+  | InvalidIndex
+  | RequirementAlreadyFilled
+  | RequirementMismatch
+  | InvalidRequirement
+  | RequiredArgument
+  | NoRequirementsLeftToComplete
+  | InvalidOwner
+  | MissingCNFTAttributes
+  | InvalidCNFTAttributes
+  | RequirementAlreadyRemoved
+  | NoRequirementsToRemove
 
 export class NotSuperAdmin extends Error {
   static readonly code = 6000
@@ -420,6 +448,314 @@ export class InvalidReferral extends Error {
   }
 }
 
+export class InvalidPackProvided extends Error {
+  static readonly code = 6035
+  readonly code = 6035
+  readonly name = "InvalidPackProvided"
+  readonly msg = "Invalid pack provided"
+
+  constructor(readonly logs?: string[]) {
+    super("6035: Invalid pack provided")
+  }
+}
+
+export class InvalidCrystalProvided extends Error {
+  static readonly code = 6036
+  readonly code = 6036
+  readonly name = "InvalidCrystalProvided"
+  readonly msg = "Invalid crystal provided"
+
+  constructor(readonly logs?: string[]) {
+    super("6036: Invalid crystal provided")
+  }
+}
+
+export class FluffleClaimNotEnabled extends Error {
+  static readonly code = 6037
+  readonly code = 6037
+  readonly name = "FluffleClaimNotEnabled"
+  readonly msg = "Fluffle claim not enabled."
+
+  constructor(readonly logs?: string[]) {
+    super("6037: Fluffle claim not enabled.")
+  }
+}
+
+export class FluffleAlreadyClaimed extends Error {
+  static readonly code = 6038
+  readonly code = 6038
+  readonly name = "FluffleAlreadyClaimed"
+  readonly msg = "Fluffle already claimed."
+
+  constructor(readonly logs?: string[]) {
+    super("6038: Fluffle already claimed.")
+  }
+}
+
+export class InvalidFluffleMint extends Error {
+  static readonly code = 6039
+  readonly code = 6039
+  readonly name = "InvalidFluffleMint"
+  readonly msg = "Invalid Fluffle mint."
+
+  constructor(readonly logs?: string[]) {
+    super("6039: Invalid Fluffle mint.")
+  }
+}
+
+export class NotValidFluffleClaimValues extends Error {
+  static readonly code = 6040
+  readonly code = 6040
+  readonly name = "NotValidFluffleClaimValues"
+  readonly msg = "Not valid Fluffle claim values."
+
+  constructor(readonly logs?: string[]) {
+    super("6040: Not valid Fluffle claim values.")
+  }
+}
+
+export class TooManyRequirementsOrRewards extends Error {
+  static readonly code = 6041
+  readonly code = 6041
+  readonly name = "TooManyRequirementsOrRewards"
+  readonly msg = "Too many requirements or rewards."
+
+  constructor(readonly logs?: string[]) {
+    super("6041: Too many requirements or rewards.")
+  }
+}
+
+export class InvalidTime extends Error {
+  static readonly code = 6042
+  readonly code = 6042
+  readonly name = "InvalidTime"
+  readonly msg = "Invalid time"
+
+  constructor(readonly logs?: string[]) {
+    super("6042: Invalid time")
+  }
+}
+
+export class TooManyMissions extends Error {
+  static readonly code = 6043
+  readonly code = 6043
+  readonly name = "TooManyMissions"
+  readonly msg = "Too many missions"
+
+  constructor(readonly logs?: string[]) {
+    super("6043: Too many missions")
+  }
+}
+
+export class InvalidSeasonNumber extends Error {
+  static readonly code = 6044
+  readonly code = 6044
+  readonly name = "InvalidSeasonNumber"
+  readonly msg = "Invalid season for feature."
+
+  constructor(readonly logs?: string[]) {
+    super("6044: Invalid season for feature.")
+  }
+}
+
+export class LockedResources extends Error {
+  static readonly code = 6045
+  readonly code = 6045
+  readonly name = "LockedResources"
+  readonly msg = "Resources are locked."
+
+  constructor(readonly logs?: string[]) {
+    super("6045: Resources are locked.")
+  }
+}
+
+export class InvalidMissionStatus extends Error {
+  static readonly code = 6046
+  readonly code = 6046
+  readonly name = "InvalidMissionStatus"
+  readonly msg = "Invalid mission status."
+
+  constructor(readonly logs?: string[]) {
+    super("6046: Invalid mission status.")
+  }
+}
+
+export class MissingRequirement extends Error {
+  static readonly code = 6047
+  readonly code = 6047
+  readonly name = "MissingRequirement"
+  readonly msg = "Missing requirement."
+
+  constructor(readonly logs?: string[]) {
+    super("6047: Missing requirement.")
+  }
+}
+
+export class StillHasRequirementsLeft extends Error {
+  static readonly code = 6048
+  readonly code = 6048
+  readonly name = "StillHasRequirementsLeft"
+  readonly msg = "Need to remove all requirements before cancelling."
+
+  constructor(readonly logs?: string[]) {
+    super("6048: Need to remove all requirements before cancelling.")
+  }
+}
+
+export class InvalidMint extends Error {
+  static readonly code = 6049
+  readonly code = 6049
+  readonly name = "InvalidMint"
+  readonly msg = "Invalid mint"
+
+  constructor(readonly logs?: string[]) {
+    super("6049: Invalid mint")
+  }
+}
+
+export class InvalidProgram extends Error {
+  static readonly code = 6050
+  readonly code = 6050
+  readonly name = "InvalidProgram"
+  readonly msg = "Invalid program"
+
+  constructor(readonly logs?: string[]) {
+    super("6050: Invalid program")
+  }
+}
+
+export class InvalidDrkeMint extends Error {
+  static readonly code = 6051
+  readonly code = 6051
+  readonly name = "InvalidDrkeMint"
+  readonly msg = "Invalid drke mint."
+
+  constructor(readonly logs?: string[]) {
+    super("6051: Invalid drke mint.")
+  }
+}
+
+export class InvalidIndex extends Error {
+  static readonly code = 6052
+  readonly code = 6052
+  readonly name = "InvalidIndex"
+  readonly msg = "Invalid index."
+
+  constructor(readonly logs?: string[]) {
+    super("6052: Invalid index.")
+  }
+}
+
+export class RequirementAlreadyFilled extends Error {
+  static readonly code = 6053
+  readonly code = 6053
+  readonly name = "RequirementAlreadyFilled"
+  readonly msg = "Requirement already filled."
+
+  constructor(readonly logs?: string[]) {
+    super("6053: Requirement already filled.")
+  }
+}
+
+export class RequirementMismatch extends Error {
+  static readonly code = 6054
+  readonly code = 6054
+  readonly name = "RequirementMismatch"
+  readonly msg = "Requirement mismatch."
+
+  constructor(readonly logs?: string[]) {
+    super("6054: Requirement mismatch.")
+  }
+}
+
+export class InvalidRequirement extends Error {
+  static readonly code = 6055
+  readonly code = 6055
+  readonly name = "InvalidRequirement"
+  readonly msg = "Invalid requirement."
+
+  constructor(readonly logs?: string[]) {
+    super("6055: Invalid requirement.")
+  }
+}
+
+export class RequiredArgument extends Error {
+  static readonly code = 6056
+  readonly code = 6056
+  readonly name = "RequiredArgument"
+  readonly msg = "Required argument."
+
+  constructor(readonly logs?: string[]) {
+    super("6056: Required argument.")
+  }
+}
+
+export class NoRequirementsLeftToComplete extends Error {
+  static readonly code = 6057
+  readonly code = 6057
+  readonly name = "NoRequirementsLeftToComplete"
+  readonly msg = "No requirements left to complete."
+
+  constructor(readonly logs?: string[]) {
+    super("6057: No requirements left to complete.")
+  }
+}
+
+export class InvalidOwner extends Error {
+  static readonly code = 6058
+  readonly code = 6058
+  readonly name = "InvalidOwner"
+  readonly msg = "Invalid owner."
+
+  constructor(readonly logs?: string[]) {
+    super("6058: Invalid owner.")
+  }
+}
+
+export class MissingCNFTAttributes extends Error {
+  static readonly code = 6059
+  readonly code = 6059
+  readonly name = "MissingCNFTAttributes"
+  readonly msg = "Missing CNFTAttributes."
+
+  constructor(readonly logs?: string[]) {
+    super("6059: Missing CNFTAttributes.")
+  }
+}
+
+export class InvalidCNFTAttributes extends Error {
+  static readonly code = 6060
+  readonly code = 6060
+  readonly name = "InvalidCNFTAttributes"
+  readonly msg = "Invalid CNFTAttributes."
+
+  constructor(readonly logs?: string[]) {
+    super("6060: Invalid CNFTAttributes.")
+  }
+}
+
+export class RequirementAlreadyRemoved extends Error {
+  static readonly code = 6061
+  readonly code = 6061
+  readonly name = "RequirementAlreadyRemoved"
+  readonly msg = "Requirement already removed."
+
+  constructor(readonly logs?: string[]) {
+    super("6061: Requirement already removed.")
+  }
+}
+
+export class NoRequirementsToRemove extends Error {
+  static readonly code = 6062
+  readonly code = 6062
+  readonly name = "NoRequirementsToRemove"
+  readonly msg = "No requirements to remove."
+
+  constructor(readonly logs?: string[]) {
+    super("6062: No requirements to remove.")
+  }
+}
+
 export function fromCode(code: number, logs?: string[]): CustomError | null {
   switch (code) {
     case 6000:
@@ -492,6 +828,62 @@ export function fromCode(code: number, logs?: string[]): CustomError | null {
       return new InvalidTierType(logs)
     case 6034:
       return new InvalidReferral(logs)
+    case 6035:
+      return new InvalidPackProvided(logs)
+    case 6036:
+      return new InvalidCrystalProvided(logs)
+    case 6037:
+      return new FluffleClaimNotEnabled(logs)
+    case 6038:
+      return new FluffleAlreadyClaimed(logs)
+    case 6039:
+      return new InvalidFluffleMint(logs)
+    case 6040:
+      return new NotValidFluffleClaimValues(logs)
+    case 6041:
+      return new TooManyRequirementsOrRewards(logs)
+    case 6042:
+      return new InvalidTime(logs)
+    case 6043:
+      return new TooManyMissions(logs)
+    case 6044:
+      return new InvalidSeasonNumber(logs)
+    case 6045:
+      return new LockedResources(logs)
+    case 6046:
+      return new InvalidMissionStatus(logs)
+    case 6047:
+      return new MissingRequirement(logs)
+    case 6048:
+      return new StillHasRequirementsLeft(logs)
+    case 6049:
+      return new InvalidMint(logs)
+    case 6050:
+      return new InvalidProgram(logs)
+    case 6051:
+      return new InvalidDrkeMint(logs)
+    case 6052:
+      return new InvalidIndex(logs)
+    case 6053:
+      return new RequirementAlreadyFilled(logs)
+    case 6054:
+      return new RequirementMismatch(logs)
+    case 6055:
+      return new InvalidRequirement(logs)
+    case 6056:
+      return new RequiredArgument(logs)
+    case 6057:
+      return new NoRequirementsLeftToComplete(logs)
+    case 6058:
+      return new InvalidOwner(logs)
+    case 6059:
+      return new MissingCNFTAttributes(logs)
+    case 6060:
+      return new InvalidCNFTAttributes(logs)
+    case 6061:
+      return new RequirementAlreadyRemoved(logs)
+    case 6062:
+      return new NoRequirementsToRemove(logs)
   }
 
   return null

@@ -28,9 +28,10 @@ export interface LevelUpAccounts {
   levelAttributes: PublicKey
   elementumMint: PublicKey
   userTokenAccount: PublicKey
-  packMetaplexMetadataAccount: PublicKey
-  packNftMint: PublicKey
-  packNftToken: PublicKey
+  packTreeAuthority: PublicKey
+  packMerkleTree: PublicKey
+  packLeafOwner: PublicKey
+  packLeafDelegate: PublicKey
   packCollectionMint: PublicKey
   packCollectionMetadata: PublicKey
   packCollectionMasterEdition: PublicKey
@@ -38,6 +39,7 @@ export interface LevelUpAccounts {
   merkleTree: PublicKey
   leafOwner: PublicKey
   leafDelegate: PublicKey
+  bubblegumSigner: PublicKey
   metaplexTokenMetadataProgram: PublicKey
   bubblegumProgram: PublicKey
   compressionProgram: PublicKey
@@ -81,13 +83,10 @@ export function levelUp(
     { pubkey: accounts.levelAttributes, isSigner: false, isWritable: true },
     { pubkey: accounts.elementumMint, isSigner: false, isWritable: true },
     { pubkey: accounts.userTokenAccount, isSigner: false, isWritable: true },
-    {
-      pubkey: accounts.packMetaplexMetadataAccount,
-      isSigner: false,
-      isWritable: true,
-    },
-    { pubkey: accounts.packNftMint, isSigner: true, isWritable: true },
-    { pubkey: accounts.packNftToken, isSigner: false, isWritable: true },
+    { pubkey: accounts.packTreeAuthority, isSigner: false, isWritable: true },
+    { pubkey: accounts.packMerkleTree, isSigner: false, isWritable: true },
+    { pubkey: accounts.packLeafOwner, isSigner: false, isWritable: false },
+    { pubkey: accounts.packLeafDelegate, isSigner: false, isWritable: false },
     { pubkey: accounts.packCollectionMint, isSigner: false, isWritable: false },
     {
       pubkey: accounts.packCollectionMetadata,
@@ -103,6 +102,7 @@ export function levelUp(
     { pubkey: accounts.merkleTree, isSigner: false, isWritable: true },
     { pubkey: accounts.leafOwner, isSigner: false, isWritable: false },
     { pubkey: accounts.leafDelegate, isSigner: false, isWritable: false },
+    { pubkey: accounts.bubblegumSigner, isSigner: false, isWritable: false },
     {
       pubkey: accounts.metaplexTokenMetadataProgram,
       isSigner: false,

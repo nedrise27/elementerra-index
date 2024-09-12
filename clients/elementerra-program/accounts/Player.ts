@@ -18,6 +18,8 @@ export interface PlayerFields {
   referrerTreasury: PublicKey
   /** Default pubkey if no referrer */
   referrerMember: PublicKey
+  numberOfElementsInventedUpdated: BN
+  numberOfElementumBurnedUpdated: BN
 }
 
 export interface PlayerJSON {
@@ -34,6 +36,8 @@ export interface PlayerJSON {
   referrerTreasury: string
   /** Default pubkey if no referrer */
   referrerMember: string
+  numberOfElementsInventedUpdated: string
+  numberOfElementumBurnedUpdated: string
 }
 
 /** PDA ["player_", season number, authority pubkey] */
@@ -51,6 +55,8 @@ export class Player {
   readonly referrerTreasury: PublicKey
   /** Default pubkey if no referrer */
   readonly referrerMember: PublicKey
+  readonly numberOfElementsInventedUpdated: BN
+  readonly numberOfElementumBurnedUpdated: BN
 
   static readonly discriminator = Buffer.from([
     205, 222, 112, 7, 165, 155, 206, 218,
@@ -64,9 +70,11 @@ export class Player {
     borsh.u64("numberOfFailedAttempts"),
     borsh.u64("numberOfElementsBurned"),
     borsh.u64("numberOfElementumBurned"),
-    borsh.array(borsh.u32(), 100, "numberOfTimeCreatedElement"),
+    borsh.array(borsh.u32(), 19, "numberOfTimeCreatedElement"),
     borsh.publicKey("referrerTreasury"),
     borsh.publicKey("referrerMember"),
+    borsh.i64("numberOfElementsInventedUpdated"),
+    borsh.i64("numberOfElementumBurnedUpdated"),
   ])
 
   constructor(fields: PlayerFields) {
@@ -80,6 +88,9 @@ export class Player {
     this.numberOfTimeCreatedElement = fields.numberOfTimeCreatedElement
     this.referrerTreasury = fields.referrerTreasury
     this.referrerMember = fields.referrerMember
+    this.numberOfElementsInventedUpdated =
+      fields.numberOfElementsInventedUpdated
+    this.numberOfElementumBurnedUpdated = fields.numberOfElementumBurnedUpdated
   }
 
   static async fetch(
@@ -136,6 +147,8 @@ export class Player {
       numberOfTimeCreatedElement: dec.numberOfTimeCreatedElement,
       referrerTreasury: dec.referrerTreasury,
       referrerMember: dec.referrerMember,
+      numberOfElementsInventedUpdated: dec.numberOfElementsInventedUpdated,
+      numberOfElementumBurnedUpdated: dec.numberOfElementumBurnedUpdated,
     })
   }
 
@@ -151,6 +164,10 @@ export class Player {
       numberOfTimeCreatedElement: this.numberOfTimeCreatedElement,
       referrerTreasury: this.referrerTreasury.toString(),
       referrerMember: this.referrerMember.toString(),
+      numberOfElementsInventedUpdated:
+        this.numberOfElementsInventedUpdated.toString(),
+      numberOfElementumBurnedUpdated:
+        this.numberOfElementumBurnedUpdated.toString(),
     }
   }
 
@@ -166,6 +183,12 @@ export class Player {
       numberOfTimeCreatedElement: obj.numberOfTimeCreatedElement,
       referrerTreasury: new PublicKey(obj.referrerTreasury),
       referrerMember: new PublicKey(obj.referrerMember),
+      numberOfElementsInventedUpdated: new BN(
+        obj.numberOfElementsInventedUpdated
+      ),
+      numberOfElementumBurnedUpdated: new BN(
+        obj.numberOfElementumBurnedUpdated
+      ),
     })
   }
 }

@@ -4,27 +4,33 @@ import * as borsh from "@coral-xyz/borsh" // eslint-disable-line @typescript-esl
 import * as types from "../types" // eslint-disable-line @typescript-eslint/no-unused-vars
 import { PROGRAM_ID } from "../programId"
 
-export interface ClaimAccounts {
+export interface ClaimFluffleArgs {
+  merkleProof: Array<Array<number>>
+  claimableAmount: BN
+}
+
+export interface ClaimFluffleAccounts {
   associatedTokenProgram: PublicKey
   tokenProgram: PublicKey
   systemProgram: PublicKey
   rent: PublicKey
   authority: PublicKey
   programSigner: PublicKey
-  solReceiver: PublicKey
-  season: PublicKey
-  stakeableCollection: PublicKey
-  stakeProof: PublicKey
-  metaplexMetadataAccount: PublicKey
-  nftMint: PublicKey
-  nftToken: PublicKey
-  elementumMint: PublicKey
-  stakingPool: PublicKey
+  fluffleClaimable: PublicKey
+  fluffleClaimed: PublicKey
+  fluffleMint: PublicKey
+  flufflePool: PublicKey
   userTokenAccount: PublicKey
 }
 
-export function claim(
-  accounts: ClaimAccounts,
+export const layout = borsh.struct([
+  borsh.vec(borsh.array(borsh.u8(), 32), "merkleProof"),
+  borsh.u64("claimableAmount"),
+])
+
+export function claimFluffle(
+  args: ClaimFluffleArgs,
+  accounts: ClaimFluffleAccounts,
   programId: PublicKey = PROGRAM_ID
 ) {
   const keys: Array<AccountMeta> = [
@@ -38,23 +44,22 @@ export function claim(
     { pubkey: accounts.rent, isSigner: false, isWritable: false },
     { pubkey: accounts.authority, isSigner: true, isWritable: true },
     { pubkey: accounts.programSigner, isSigner: false, isWritable: false },
-    { pubkey: accounts.solReceiver, isSigner: false, isWritable: true },
-    { pubkey: accounts.season, isSigner: false, isWritable: true },
-    { pubkey: accounts.stakeableCollection, isSigner: false, isWritable: true },
-    { pubkey: accounts.stakeProof, isSigner: false, isWritable: true },
-    {
-      pubkey: accounts.metaplexMetadataAccount,
-      isSigner: false,
-      isWritable: false,
-    },
-    { pubkey: accounts.nftMint, isSigner: false, isWritable: false },
-    { pubkey: accounts.nftToken, isSigner: false, isWritable: false },
-    { pubkey: accounts.elementumMint, isSigner: false, isWritable: false },
-    { pubkey: accounts.stakingPool, isSigner: false, isWritable: true },
+    { pubkey: accounts.fluffleClaimable, isSigner: false, isWritable: true },
+    { pubkey: accounts.fluffleClaimed, isSigner: false, isWritable: true },
+    { pubkey: accounts.fluffleMint, isSigner: false, isWritable: false },
+    { pubkey: accounts.flufflePool, isSigner: false, isWritable: true },
     { pubkey: accounts.userTokenAccount, isSigner: false, isWritable: true },
   ]
-  const identifier = Buffer.from([62, 198, 214, 193, 213, 159, 108, 210])
-  const data = identifier
+  const identifier = Buffer.from([198, 239, 253, 183, 118, 173, 127, 4])
+  const buffer = Buffer.alloc(1000)
+  const len = layout.encode(
+    {
+      merkleProof: args.merkleProof,
+      claimableAmount: args.claimableAmount,
+    },
+    buffer
+  )
+  const data = Buffer.concat([identifier, buffer]).slice(0, 8 + len)
   const ix = new TransactionInstruction({ keys, programId, data })
   return ix
 }

@@ -4,49 +4,45 @@ import * as borsh from "@coral-xyz/borsh" // eslint-disable-line @typescript-esl
 import * as types from "../types" // eslint-disable-line @typescript-eslint/no-unused-vars
 import { PROGRAM_ID } from "../programId"
 
-export interface NftLevelAttributesFields {
+export interface FluffleClaimedFields {
   bump: number
-  nftMint: PublicKey
-  level: number
-  lastUpdated: BN
+  authority: PublicKey
+  claimed: boolean
 }
 
-export interface NftLevelAttributesJSON {
+export interface FluffleClaimedJSON {
   bump: number
-  nftMint: string
-  level: number
-  lastUpdated: string
+  authority: string
+  claimed: boolean
 }
 
-export class NftLevelAttributes {
+/** PDA ["fluffle_claimed_", wallet pub key, claimable pub key ] */
+export class FluffleClaimed {
   readonly bump: number
-  readonly nftMint: PublicKey
-  readonly level: number
-  readonly lastUpdated: BN
+  readonly authority: PublicKey
+  readonly claimed: boolean
 
   static readonly discriminator = Buffer.from([
-    211, 107, 203, 16, 118, 29, 31, 192,
+    52, 211, 248, 223, 202, 232, 76, 197,
   ])
 
   static readonly layout = borsh.struct([
     borsh.u8("bump"),
-    borsh.publicKey("nftMint"),
-    borsh.u16("level"),
-    borsh.i64("lastUpdated"),
+    borsh.publicKey("authority"),
+    borsh.bool("claimed"),
   ])
 
-  constructor(fields: NftLevelAttributesFields) {
+  constructor(fields: FluffleClaimedFields) {
     this.bump = fields.bump
-    this.nftMint = fields.nftMint
-    this.level = fields.level
-    this.lastUpdated = fields.lastUpdated
+    this.authority = fields.authority
+    this.claimed = fields.claimed
   }
 
   static async fetch(
     c: Connection,
     address: PublicKey,
     programId: PublicKey = PROGRAM_ID
-  ): Promise<NftLevelAttributes | null> {
+  ): Promise<FluffleClaimed | null> {
     const info = await c.getAccountInfo(address)
 
     if (info === null) {
@@ -63,7 +59,7 @@ export class NftLevelAttributes {
     c: Connection,
     addresses: PublicKey[],
     programId: PublicKey = PROGRAM_ID
-  ): Promise<Array<NftLevelAttributes | null>> {
+  ): Promise<Array<FluffleClaimed | null>> {
     const infos = await c.getMultipleAccountsInfo(addresses)
 
     return infos.map((info) => {
@@ -78,36 +74,33 @@ export class NftLevelAttributes {
     })
   }
 
-  static decode(data: Buffer): NftLevelAttributes {
-    if (!data.slice(0, 8).equals(NftLevelAttributes.discriminator)) {
+  static decode(data: Buffer): FluffleClaimed {
+    if (!data.slice(0, 8).equals(FluffleClaimed.discriminator)) {
       throw new Error("invalid account discriminator")
     }
 
-    const dec = NftLevelAttributes.layout.decode(data.slice(8))
+    const dec = FluffleClaimed.layout.decode(data.slice(8))
 
-    return new NftLevelAttributes({
+    return new FluffleClaimed({
       bump: dec.bump,
-      nftMint: dec.nftMint,
-      level: dec.level,
-      lastUpdated: dec.lastUpdated,
+      authority: dec.authority,
+      claimed: dec.claimed,
     })
   }
 
-  toJSON(): NftLevelAttributesJSON {
+  toJSON(): FluffleClaimedJSON {
     return {
       bump: this.bump,
-      nftMint: this.nftMint.toString(),
-      level: this.level,
-      lastUpdated: this.lastUpdated.toString(),
+      authority: this.authority.toString(),
+      claimed: this.claimed,
     }
   }
 
-  static fromJSON(obj: NftLevelAttributesJSON): NftLevelAttributes {
-    return new NftLevelAttributes({
+  static fromJSON(obj: FluffleClaimedJSON): FluffleClaimed {
+    return new FluffleClaimed({
       bump: obj.bump,
-      nftMint: new PublicKey(obj.nftMint),
-      level: obj.level,
-      lastUpdated: new BN(obj.lastUpdated),
+      authority: new PublicKey(obj.authority),
+      claimed: obj.claimed,
     })
   }
 }

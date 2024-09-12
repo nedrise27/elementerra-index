@@ -4,49 +4,40 @@ import * as borsh from "@coral-xyz/borsh" // eslint-disable-line @typescript-esl
 import * as types from "../types" // eslint-disable-line @typescript-eslint/no-unused-vars
 import { PROGRAM_ID } from "../programId"
 
-export interface NftLevelAttributesFields {
+export interface EscrowCNFTFields {
   bump: number
-  nftMint: PublicKey
-  level: number
-  lastUpdated: BN
+  assetId: Array<number>
 }
 
-export interface NftLevelAttributesJSON {
+export interface EscrowCNFTJSON {
   bump: number
-  nftMint: string
-  level: number
-  lastUpdated: string
+  assetId: Array<number>
 }
 
-export class NftLevelAttributes {
+/** PDA ["escrow_crystal", data_hash] */
+export class EscrowCNFT {
   readonly bump: number
-  readonly nftMint: PublicKey
-  readonly level: number
-  readonly lastUpdated: BN
+  readonly assetId: Array<number>
 
   static readonly discriminator = Buffer.from([
-    211, 107, 203, 16, 118, 29, 31, 192,
+    106, 233, 56, 254, 134, 115, 28, 216,
   ])
 
   static readonly layout = borsh.struct([
     borsh.u8("bump"),
-    borsh.publicKey("nftMint"),
-    borsh.u16("level"),
-    borsh.i64("lastUpdated"),
+    borsh.array(borsh.u8(), 32, "assetId"),
   ])
 
-  constructor(fields: NftLevelAttributesFields) {
+  constructor(fields: EscrowCNFTFields) {
     this.bump = fields.bump
-    this.nftMint = fields.nftMint
-    this.level = fields.level
-    this.lastUpdated = fields.lastUpdated
+    this.assetId = fields.assetId
   }
 
   static async fetch(
     c: Connection,
     address: PublicKey,
     programId: PublicKey = PROGRAM_ID
-  ): Promise<NftLevelAttributes | null> {
+  ): Promise<EscrowCNFT | null> {
     const info = await c.getAccountInfo(address)
 
     if (info === null) {
@@ -63,7 +54,7 @@ export class NftLevelAttributes {
     c: Connection,
     addresses: PublicKey[],
     programId: PublicKey = PROGRAM_ID
-  ): Promise<Array<NftLevelAttributes | null>> {
+  ): Promise<Array<EscrowCNFT | null>> {
     const infos = await c.getMultipleAccountsInfo(addresses)
 
     return infos.map((info) => {
@@ -78,36 +69,30 @@ export class NftLevelAttributes {
     })
   }
 
-  static decode(data: Buffer): NftLevelAttributes {
-    if (!data.slice(0, 8).equals(NftLevelAttributes.discriminator)) {
+  static decode(data: Buffer): EscrowCNFT {
+    if (!data.slice(0, 8).equals(EscrowCNFT.discriminator)) {
       throw new Error("invalid account discriminator")
     }
 
-    const dec = NftLevelAttributes.layout.decode(data.slice(8))
+    const dec = EscrowCNFT.layout.decode(data.slice(8))
 
-    return new NftLevelAttributes({
+    return new EscrowCNFT({
       bump: dec.bump,
-      nftMint: dec.nftMint,
-      level: dec.level,
-      lastUpdated: dec.lastUpdated,
+      assetId: dec.assetId,
     })
   }
 
-  toJSON(): NftLevelAttributesJSON {
+  toJSON(): EscrowCNFTJSON {
     return {
       bump: this.bump,
-      nftMint: this.nftMint.toString(),
-      level: this.level,
-      lastUpdated: this.lastUpdated.toString(),
+      assetId: this.assetId,
     }
   }
 
-  static fromJSON(obj: NftLevelAttributesJSON): NftLevelAttributes {
-    return new NftLevelAttributes({
+  static fromJSON(obj: EscrowCNFTJSON): EscrowCNFT {
+    return new EscrowCNFT({
       bump: obj.bump,
-      nftMint: new PublicKey(obj.nftMint),
-      level: obj.level,
-      lastUpdated: new BN(obj.lastUpdated),
+      assetId: obj.assetId,
     })
   }
 }

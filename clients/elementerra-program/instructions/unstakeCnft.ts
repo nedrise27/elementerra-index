@@ -4,8 +4,8 @@ import * as borsh from "@coral-xyz/borsh" // eslint-disable-line @typescript-esl
 import * as types from "../types" // eslint-disable-line @typescript-eslint/no-unused-vars
 import { PROGRAM_ID } from "../programId"
 
-export interface OpenPackArgs {
-  pack: types.TierKind
+export interface UnstakeCnftArgs {
+  crystalTier: types.CrystalTierKind
   root: Array<number>
   dataHash: Array<number>
   creatorHash: Array<number>
@@ -13,35 +13,29 @@ export interface OpenPackArgs {
   index: number
 }
 
-export interface OpenPackAccounts {
+export interface UnstakeCnftAccounts {
   associatedTokenProgram: PublicKey
   tokenProgram: PublicKey
   systemProgram: PublicKey
   rent: PublicKey
-  slots: PublicKey
   authority: PublicKey
   programSigner: PublicKey
-  solReceiver: PublicKey
-  season: PublicKey
-  player: PublicKey
-  packTreeAuthority: PublicKey
-  packMerkleTree: PublicKey
-  packLeafOwner: PublicKey
-  packLeafDelegate: PublicKey
-  crystalCollectionMint: PublicKey
-  crystalCollectionMetadata: PublicKey
-  crystalCollectionMasterEdition: PublicKey
+  escrowCnft: PublicKey
+  nftStakeProof: PublicKey
+  crystalTreeAuthority: PublicKey
+  crystalMerkleTree: PublicKey
+  elementumMint: PublicKey
+  stakingPool: PublicKey
+  userTokenAccount: PublicKey
   bubblegumSigner: PublicKey
   metaplexTokenMetadataProgram: PublicKey
   bubblegumProgram: PublicKey
   compressionProgram: PublicKey
   logWrapper: PublicKey
-  elementumMint: PublicKey
-  userTokenAccount: PublicKey
 }
 
 export const layout = borsh.struct([
-  types.Tier.layout("pack"),
+  types.CrystalTier.layout("crystalTier"),
   borsh.array(borsh.u8(), 32, "root"),
   borsh.array(borsh.u8(), 32, "dataHash"),
   borsh.array(borsh.u8(), 32, "creatorHash"),
@@ -49,9 +43,9 @@ export const layout = borsh.struct([
   borsh.u32("index"),
 ])
 
-export function openPack(
-  args: OpenPackArgs,
-  accounts: OpenPackAccounts,
+export function unstakeCnft(
+  args: UnstakeCnftArgs,
+  accounts: UnstakeCnftAccounts,
   programId: PublicKey = PROGRAM_ID
 ) {
   const keys: Array<AccountMeta> = [
@@ -63,31 +57,19 @@ export function openPack(
     { pubkey: accounts.tokenProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.systemProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.rent, isSigner: false, isWritable: false },
-    { pubkey: accounts.slots, isSigner: false, isWritable: false },
     { pubkey: accounts.authority, isSigner: true, isWritable: true },
-    { pubkey: accounts.programSigner, isSigner: false, isWritable: false },
-    { pubkey: accounts.solReceiver, isSigner: false, isWritable: true },
-    { pubkey: accounts.season, isSigner: false, isWritable: true },
-    { pubkey: accounts.player, isSigner: false, isWritable: true },
-    { pubkey: accounts.packTreeAuthority, isSigner: false, isWritable: true },
-    { pubkey: accounts.packMerkleTree, isSigner: false, isWritable: true },
-    { pubkey: accounts.packLeafOwner, isSigner: false, isWritable: false },
-    { pubkey: accounts.packLeafDelegate, isSigner: false, isWritable: false },
+    { pubkey: accounts.programSigner, isSigner: false, isWritable: true },
+    { pubkey: accounts.escrowCnft, isSigner: false, isWritable: true },
+    { pubkey: accounts.nftStakeProof, isSigner: false, isWritable: true },
     {
-      pubkey: accounts.crystalCollectionMint,
-      isSigner: false,
-      isWritable: false,
-    },
-    {
-      pubkey: accounts.crystalCollectionMetadata,
+      pubkey: accounts.crystalTreeAuthority,
       isSigner: false,
       isWritable: true,
     },
-    {
-      pubkey: accounts.crystalCollectionMasterEdition,
-      isSigner: false,
-      isWritable: true,
-    },
+    { pubkey: accounts.crystalMerkleTree, isSigner: false, isWritable: true },
+    { pubkey: accounts.elementumMint, isSigner: false, isWritable: false },
+    { pubkey: accounts.stakingPool, isSigner: false, isWritable: true },
+    { pubkey: accounts.userTokenAccount, isSigner: false, isWritable: true },
     { pubkey: accounts.bubblegumSigner, isSigner: false, isWritable: false },
     {
       pubkey: accounts.metaplexTokenMetadataProgram,
@@ -97,14 +79,12 @@ export function openPack(
     { pubkey: accounts.bubblegumProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.compressionProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.logWrapper, isSigner: false, isWritable: false },
-    { pubkey: accounts.elementumMint, isSigner: false, isWritable: true },
-    { pubkey: accounts.userTokenAccount, isSigner: false, isWritable: true },
   ]
-  const identifier = Buffer.from([75, 203, 144, 65, 63, 253, 103, 85])
+  const identifier = Buffer.from([171, 194, 46, 211, 116, 227, 222, 35])
   const buffer = Buffer.alloc(1000)
   const len = layout.encode(
     {
-      pack: args.pack.toEncodable(),
+      crystalTier: args.crystalTier.toEncodable(),
       root: args.root,
       dataHash: args.dataHash,
       creatorHash: args.creatorHash,

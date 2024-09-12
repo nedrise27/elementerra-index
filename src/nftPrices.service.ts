@@ -7,6 +7,9 @@ import { lastValueFrom } from 'rxjs';
 import { NftPrice } from './models/NftPrice.model';
 import { GetNftPriceRequest } from './requests/GetNftPriceRequest';
 import { NftPriceResponse } from './responses/NftPriceResponse';
+import { asyncSleep } from './lib/util';
+import { UpdateNftPricesRequest } from './requests/UpdateNftPricesRequest';
+import { COLLECTIONS } from './lib/constants';
 
 @Injectable()
 export class NftPricesService {
@@ -43,8 +46,24 @@ export class NftPricesService {
     );
   }
 
-  private async sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  public async updateNftPrice(request: UpdateNftPricesRequest): Promise<void> {
+    for (const nftPrice of request.nftPrices) {
+      await this.nftPriceModel.upsert(
+        {
+          priceInSol: nftPrice.priceInSol,
+          collection: nftPrice.collection,
+          level: nftPrice.level,
+          mint: COLLECTIONS[nftPrice.collection],
+          timestamp: Math.floor(new Date().getTime() / 1000),
+        },
+        {
+          conflictWhere: {
+            collection: nftPrice.collection,
+            level: nftPrice.level,
+          },
+        },
+      );
+    }
   }
 
   @Cron('0 */4 * * * *')
@@ -55,16 +74,16 @@ export class NftPricesService {
 
     await this.fetchAndSaveRabbitPrice();
 
-    await this.sleep(this.MAGIC_EDEN_RATE_LIMIT);
+    await asyncSleep(this.MAGIC_EDEN_RATE_LIMIT);
 
     for (const crystalLevel of this.CRYSTAL_LEVELS) {
       await this.fetchAndSaveCrystalPrice(crystalLevel);
-      await this.sleep(this.MAGIC_EDEN_RATE_LIMIT);
+      await asyncSleep(this.MAGIC_EDEN_RATE_LIMIT);
     }
 
     for (const chestLevel of this.CHEST_TIERS) {
       await this.fetchAndSaveChestPrice(chestLevel);
-      await this.sleep(this.MAGIC_EDEN_RATE_LIMIT);
+      await asyncSleep(this.MAGIC_EDEN_RATE_LIMIT);
     }
   }
 

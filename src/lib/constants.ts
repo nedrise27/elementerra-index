@@ -17,3 +17,9 @@ export const ADD_TO_PENDING_GUESS_COUNT = 4;
 export const EARLY_ELEMENTERRA_PROGRAM_SOLT = 243925961;
 export const EARLY_ELEMENTERRA_PROGRAM_TRANSACTION =
   '2RCF7SWrQtXtERvacNGHQzHZJ2jsZxRARxKhtxVdoR4bjmAH3V1Wc2UM1r5ANjP2QULpm2sYTrVFARekVzVaMqZH';
+
+export const COLLECTIONS = {
+  elementerra_rabbits: '4n4zLe1BcREy9XQyHwSMJJHR4YHn7AgP2dx4jL6X8GGR',
+  elementerra_crystals: 'GsWtWwZLkS9Ee9Rb13MuTG3JfQx3nhh16ps36ZNEPcdW',
+  elementerra_chests: '5LkHs8vFFkjgN6pnmPsvgUDn9iN4yj8h2qSoejuHtKoJ',
+};
