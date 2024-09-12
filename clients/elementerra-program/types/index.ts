@@ -17,8 +17,6 @@ export type {
   AddRequirementParamsFields,
   AddRequirementParamsJSON,
 } from "./AddRequirementParams"
-export { CNFTValues } from "./CNFTValues"
-export type { CNFTValuesFields, CNFTValuesJSON } from "./CNFTValues"
 export { RemoveRequirementParams } from "./RemoveRequirementParams"
 export type {
   RemoveRequirementParamsFields,
