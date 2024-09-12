@@ -10,10 +10,10 @@ export class GetGuessRequest {
     minLength: 4,
     maxLength: 4,
     example: [
-      ElementName.air,
-      ElementName.earth,
-      ElementName.earth,
-      ElementName.earth,
+      ElementName.pebble,
+      ElementName.compression,
+      ElementName.compression,
+      ElementName.compression,
     ],
   })
   recipe: string[];
