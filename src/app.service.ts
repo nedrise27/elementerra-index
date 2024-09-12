@@ -223,8 +223,6 @@ export class AppService {
         data: parsedTransaction,
       });
 
-      console.log(transactionHistory);
-
       return transactionHistory;
     } catch (err) {
       console.error(`Error while saving transaction: ${err}`);
