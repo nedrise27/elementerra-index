@@ -6,7 +6,7 @@ export class GetAvailableRecipesRequestElement {
     type: 'string',
     enum: ElementName,
     enumName: 'ElementName',
-    example: ElementName.time,
+    example: ElementName.pebble,
   })
   element: ElementName;
 
@@ -31,11 +31,10 @@ export class GetAvailableRecipesRequest {
   @ApiProperty({
     type: [GetAvailableRecipesRequestElement],
     example: [
-      { element: ElementName.time, minAmount: 1, maxAmount: 4 },
-      { element: ElementName.dust, minAmount: 0, maxAmount: 4 },
-      { element: ElementName.pressure, minAmount: 0, maxAmount: 4 },
-      { element: ElementName.heat, minAmount: 0, maxAmount: 4 },
-      { element: ElementName.air, minAmount: 0, maxAmount: 4 },
+      { element: ElementName.pebble, minAmount: 1, maxAmount: 4 },
+      { element: ElementName.flame, minAmount: 0, maxAmount: 4 },
+      { element: ElementName.flower, minAmount: 0, maxAmount: 4 },
+      { element: ElementName.mold, minAmount: 0, maxAmount: 4 },
     ],
   })
   elements: GetAvailableRecipesRequestElement[];
@@ -44,7 +43,7 @@ export class GetAvailableRecipesRequest {
     type: 'integer',
     minimum: 1,
     maximum: 7,
-    example: 3,
+    example: 2,
   })
   tier: number;
 }

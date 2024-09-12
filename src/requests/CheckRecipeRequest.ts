@@ -10,10 +10,10 @@ export class CheckRecipeRequest {
     minLength: 4,
     maxLength: 4,
     example: [
-      ElementName.air,
-      ElementName.earth,
-      ElementName.earth,
-      ElementName.earth,
+      ElementName.pebble,
+      ElementName.pebble,
+      ElementName.compression,
+      ElementName.compression,
     ],
   })
   elements: string[];
