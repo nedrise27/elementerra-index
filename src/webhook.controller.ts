@@ -16,7 +16,6 @@ export class WebhookController {
     @Body() transactionHistory: ParsedTransaction[],
   ) {
     checkAuthHeader(authHeader);
-    console.log(transactionHistory);
     await this.appService.processTransactionHistory(transactionHistory);
   }
 }
