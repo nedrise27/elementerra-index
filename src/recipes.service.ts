@@ -49,6 +49,8 @@ export class RecipesService {
 
     const foundRecipe = await this.guessModel.findOne({ where: { recipe } });
 
+    const receipes = await this.guessModel.findAll({ limit: 10 });
+
     let wasTried: boolean = false;
     let wasSuccessful: boolean | null = null;
 

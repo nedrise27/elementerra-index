@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import * as _ from 'lodash';
-import { ElementName } from './lib/elements';
+import { cleanAndOrderRecipe, ElementName } from './lib/elements';
 import { RecipesService } from './recipes.service';
 import { CheckRecipeRequest } from './requests/CheckRecipeRequest';
 import { GetAvailableRecipesRequest } from './requests/GetAvailableRecipesRequest';
@@ -25,7 +25,9 @@ export class RecipesController {
 
     this.checkElementNames(request.elements);
 
-    return this.recipesService.checkRecipe(request.elements);
+    return this.recipesService.checkRecipe(
+      cleanAndOrderRecipe(request.elements),
+    );
   }
 
   @Post('get-available-recipes')
