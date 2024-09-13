@@ -7,12 +7,15 @@ import { ConfigureEventsResponse } from './responses/ConfigureEventsResponse';
 import { InjectModel } from '@nestjs/sequelize';
 import { EventsConfigurationModel } from './models/EventsConfiguration.model';
 import * as _ from 'lodash';
+import { Element } from './models/Element.model';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectModel(EventsConfigurationModel)
     private readonly eventsConfigurationModel: typeof EventsConfigurationModel,
+    @InjectModel(Element)
+    private readonly elementModel: typeof Element,
   ) {}
 
   public async configureEvents(
@@ -47,11 +50,17 @@ export class EventsService {
       where: { guesser: user },
     });
 
+    const element = await this.elementModel.findOne({
+      where: {
+        id: guess.element,
+      },
+    });
+
     const event: ForgeEvent = {
       eventTopic,
       timestamp,
       user,
-      element: ELEMENTS_IDS[guess.element],
+      element: element.name,
       isSuccess: guess.isSuccess,
       preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
       recipe: guess.recipe as [string, string, string, string],
