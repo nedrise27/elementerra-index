@@ -25,9 +25,8 @@ export class RecipesController {
 
     this.checkElementNames(request.elements);
 
-    return this.recipesService.checkRecipe(
-      cleanAndOrderRecipe(request.elements),
-    );
+    const receipe = cleanAndOrderRecipe(request.elements);
+    return this.recipesService.checkRecipe(receipe);
   }
 
   @Post('get-available-recipes')
