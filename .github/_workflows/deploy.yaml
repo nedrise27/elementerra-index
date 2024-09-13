@@ -1,0 +1,39 @@
+name: Deploy Service
+
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SSH_USER: admin
+      SSH_KEY: ${{ secrets.ELEMENTERRA_ACTIONS_SSH_KEY }}
+      DEPLOYMENT_HOST: ${{ secrets.DEPLOYMENT_HOST }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure ssh
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/id_ed 
+          chmod 600 ~/.ssh/id_ed
+
+      - name: Fill update deployment script with secrets
+        run: |
+          sed -i \
+            -e "s|__RELATIONAL_DATABASE_HOST__|${{ secrets.RELATIONAL_DATABASE_HOST }}|g" \
+            -e "s|__RELATIONAL_DATABASE_USERNAME__|${{ secrets.RELATIONAL_DATABASE_USERNAME }}|g" \
+            -e "s|__RELATIONAL_DATABASE_PASSWORD__|${{ secrets.RELATIONAL_DATABASE_PASSWORD }}|g" \
+            -e "s|__RELATIONAL_DATABASE_NAME__|${{ secrets.RELATIONAL_DATABASE_NAME }}|g" \
+            -e "s|__PAIN_TEXT_PASSWORD__|${{ secrets.PAIN_TEXT_PASSWORD }}|g" \
+            -e "s|__HELIUS_API_KEY__|${{ secrets.HELIUS_API_KEY }}|g" \
+            -e "s|__WEBSOCKET_API_URL__|${{ secrets.WEBSOCKET_API_URL }}|g" \
+            -e "s|__MAGIC_EDEN_API_KEY__|${{ secrets.MAGIC_EDEN_API_KEY }}|g" \
+            pull_and_deploy.sh
+
+      - name: Trigger deployment on host
+        run: ssh -i ~/.ssh/id_ed -o StrictHostKeyChecking=no $SSH_USER@$DEPLOYMENT_HOST 'bash -s' < pull_and_deploy.sh
