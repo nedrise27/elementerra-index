@@ -4,20 +4,16 @@ import * as borsh from "@coral-xyz/borsh" // eslint-disable-line @typescript-esl
 import * as types from "../types" // eslint-disable-line @typescript-eslint/no-unused-vars
 import { PROGRAM_ID } from "../programId"
 
-export interface ClaimPendingGuessAccounts {
+export interface MigratePackAccounts {
   associatedTokenProgram: PublicKey
   tokenProgram: PublicKey
   systemProgram: PublicKey
   rent: PublicKey
   authority: PublicKey
   programSigner: PublicKey
-  solVault: PublicKey
-  solReceiver: PublicKey
-  season: PublicKey
-  player: PublicKey
-  potentialInventedElement: PublicKey
-  pendingGuess: PublicKey
-  guess: PublicKey
+  packMetaplexMetadataAccount: PublicKey
+  packNftMint: PublicKey
+  packNftToken: PublicKey
   packTreeAuthority: PublicKey
   packMerkleTree: PublicKey
   packLeafOwner: PublicKey
@@ -25,22 +21,15 @@ export interface ClaimPendingGuessAccounts {
   packCollectionMint: PublicKey
   packCollectionMetadata: PublicKey
   packCollectionMasterEdition: PublicKey
-  metaplexTokenMetadataProgram: PublicKey
-  treeAuthority: PublicKey
   bubblegumSigner: PublicKey
-  merkleTree: PublicKey
-  leafOwner: PublicKey
-  leafDelegate: PublicKey
-  collectionMint: PublicKey
-  collectionMetadata: PublicKey
-  collectionMasterEdition: PublicKey
+  metaplexTokenMetadataProgram: PublicKey
   bubblegumProgram: PublicKey
   compressionProgram: PublicKey
   logWrapper: PublicKey
 }
 
-export function claimPendingGuess(
-  accounts: ClaimPendingGuessAccounts,
+export function migratePack(
+  accounts: MigratePackAccounts,
   programId: PublicKey = PROGRAM_ID
 ) {
   const keys: Array<AccountMeta> = [
@@ -54,17 +43,13 @@ export function claimPendingGuess(
     { pubkey: accounts.rent, isSigner: false, isWritable: false },
     { pubkey: accounts.authority, isSigner: true, isWritable: true },
     { pubkey: accounts.programSigner, isSigner: false, isWritable: false },
-    { pubkey: accounts.solVault, isSigner: false, isWritable: true },
-    { pubkey: accounts.solReceiver, isSigner: false, isWritable: true },
-    { pubkey: accounts.season, isSigner: false, isWritable: true },
-    { pubkey: accounts.player, isSigner: false, isWritable: true },
     {
-      pubkey: accounts.potentialInventedElement,
+      pubkey: accounts.packMetaplexMetadataAccount,
       isSigner: false,
       isWritable: true,
     },
-    { pubkey: accounts.pendingGuess, isSigner: false, isWritable: true },
-    { pubkey: accounts.guess, isSigner: false, isWritable: true },
+    { pubkey: accounts.packNftMint, isSigner: false, isWritable: true },
+    { pubkey: accounts.packNftToken, isSigner: false, isWritable: true },
     { pubkey: accounts.packTreeAuthority, isSigner: false, isWritable: true },
     { pubkey: accounts.packMerkleTree, isSigner: false, isWritable: true },
     { pubkey: accounts.packLeafOwner, isSigner: false, isWritable: false },
@@ -80,28 +65,17 @@ export function claimPendingGuess(
       isSigner: false,
       isWritable: true,
     },
+    { pubkey: accounts.bubblegumSigner, isSigner: false, isWritable: false },
     {
       pubkey: accounts.metaplexTokenMetadataProgram,
       isSigner: false,
       isWritable: false,
     },
-    { pubkey: accounts.treeAuthority, isSigner: false, isWritable: true },
-    { pubkey: accounts.bubblegumSigner, isSigner: false, isWritable: false },
-    { pubkey: accounts.merkleTree, isSigner: false, isWritable: true },
-    { pubkey: accounts.leafOwner, isSigner: false, isWritable: false },
-    { pubkey: accounts.leafDelegate, isSigner: false, isWritable: false },
-    { pubkey: accounts.collectionMint, isSigner: false, isWritable: true },
-    { pubkey: accounts.collectionMetadata, isSigner: false, isWritable: true },
-    {
-      pubkey: accounts.collectionMasterEdition,
-      isSigner: false,
-      isWritable: true,
-    },
     { pubkey: accounts.bubblegumProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.compressionProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.logWrapper, isSigner: false, isWritable: false },
   ]
-  const identifier = Buffer.from([101, 180, 221, 66, 136, 22, 44, 153])
+  const identifier = Buffer.from([139, 116, 95, 125, 36, 208, 226, 191])
   const data = identifier
   const ix = new TransactionInstruction({ keys, programId, data })
   return ix
