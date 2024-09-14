@@ -60,7 +60,7 @@ export class EventsService {
       eventTopic,
       timestamp,
       user,
-      element: element.name,
+      element: element?.name || guess.element,
       isSuccess: guess.isSuccess,
       preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
       recipe: guess.recipe as [string, string, string, string],
