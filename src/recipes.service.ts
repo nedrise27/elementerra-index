@@ -10,6 +10,8 @@ import { GetAvailableRecipesRequestElement } from './requests/GetAvailableRecipe
 import { CheckRecipeResponse } from './responses/CheckRecipeResponse';
 import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResponse';
 import { RecipeRequestLog } from './models/RecipeRequestLog';
+import { HeliusService } from './helius.service';
+import { PROGRAM_ID } from 'clients/elementerra-program/programId';
 
 @Injectable()
 export class RecipesService {
@@ -20,6 +22,7 @@ export class RecipesService {
     private readonly guessModel: typeof GuessModel,
     @InjectModel(RecipeRequestLog)
     private readonly recipeRequestLogModel: typeof RecipeRequestLog,
+    private readonly heliusService: HeliusService,
   ) {}
 
   public async getGuess(address: string): Promise<GuessModel | undefined> {
@@ -211,72 +214,49 @@ export class RecipesService {
   }
 
   public async replay() {
-    const successfulRecipes = await this.elementModel.sequelize.query(
-      `select distinct on (recipe) fa.tx,array_agg(e.name order by e.name asc) recipe, fa.has_failed as "hasFailed" from elements e join forge_attempts fa on (fa.tx = e.forge_attempt_tx) where fa.has_failed = 'f' group by fa.tx`,
-    );
-    const failedRecipes = await this.elementModel.sequelize.query(
-      `select distinct on (recipe) fa.tx,array_agg(e.name order by e.name asc) recipe, fa.has_failed as "hasFailed" from elements e join forge_attempts fa on (fa.tx = e.forge_attempt_tx) where fa.has_failed = 't' group by fa.tx`,
+    const guesses = await this.heliusService.connection.getProgramAccounts(
+      PROGRAM_ID,
+      {
+        filters: [
+          {
+            memcmp: {
+              offset: 0,
+              bytes: Guess.discriminator.toString('base64'),
+              encoding: 'base64',
+            },
+          },
+        ],
+      },
     );
 
-    const successfulElements = [];
-    for (const r of successfulRecipes[0]) {
-      const row: any = r;
-      const recipe = row.recipe.map((e) => e.replace(' ', '').toLowerCase());
-      recipe.sort();
-      const isSuccess: boolean = !row.hasFailed;
-
-      successfulElements.push(recipe);
+    for (const item of guesses) {
+      const address = item.pubkey.toString();
+      const guessIDL = Guess.decode(item.account.data);
+      const recipe = cleanAndOrderRecipe([
+        guessIDL.elementTried1Name,
+        guessIDL.elementTried2Name,
+        guessIDL.elementTried3Name,
+        guessIDL.elementTried4Name,
+      ]);
 
       const res = await this.guessModel.findOne({
         where: {
           recipe,
         },
       });
+
       if (_.isNil(res)) {
+        console.log(recipe);
         await this.guessModel.create({
+          address,
+          seasonNumber: guessIDL.seasonNumber,
+          numberOfTimesTried: guessIDL.numberOfTimesTried.toNumber(),
+          isSuccess: guessIDL.isSuccess,
+          element: guessIDL.element.toString(),
           recipe,
-          isSuccess,
+          creator: guessIDL.creator.toString(),
         });
       }
     }
-
-    for (const r of failedRecipes[0]) {
-      const row: any = r;
-      const recipe = row.recipe.map((e) => e.replace(' ', '').toLowerCase());
-      recipe.sort();
-      const wasSuccessful: boolean = !row.hasFailed;
-
-      if (!successfulElements.find((e) => _.isEqual(e, recipe))) {
-        const res = await this.guessModel.findOne({ where: { recipe } });
-
-        if (_.isNil(res)) {
-          await this.guessModel.create({
-            recipe,
-            wasSuccessful,
-          });
-        }
-      }
-    }
-  }
-
-  public async checkAndUpdateRecipes(guess: Guess, guessAddress: string) {
-    const guessedRecipe = [
-      guess.elementTried1Name,
-      guess.elementTried2Name,
-      guess.elementTried3Name,
-      guess.elementTried4Name,
-    ];
-
-    const recipe = cleanAndOrderRecipe(guessedRecipe);
-
-    await this.guessModel.upsert({
-      address: guessAddress,
-      seasonNumber: guess.seasonNumber,
-      numberOfTimesTried: guess.numberOfTimesTried.toNumber(),
-      isSuccess: guess.isSuccess,
-      element: guess.element.toString(),
-      recipe,
-      creator: guess.creator.toString(),
-    });
   }
 }

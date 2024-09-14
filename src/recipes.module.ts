@@ -5,6 +5,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Element, ForgeAttempt } from './models';
 import { GuessModel } from './models/Guess.model';
 import { RecipeRequestLog } from './models/RecipeRequestLog';
+import { HeliusModule } from './helius.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { RecipeRequestLog } from './models/RecipeRequestLog';
       GuessModel,
       RecipeRequestLog,
     ]),
+    HeliusModule,
   ],
   providers: [RecipesService],
   controllers: [RecipesController],
