@@ -8,7 +8,9 @@ import { InjectModel } from '@nestjs/sequelize';
 import { EventsConfigurationModel } from './models/EventsConfiguration.model';
 import * as _ from 'lodash';
 import { Element } from './models/Element.model';
+import { Element as ElementIDL } from '../clients/elementerra-program/accounts';
 import { HeliusService } from './helius.service';
+import { PublicKey } from '@solana/web3.js';
 
 @Injectable()
 export class EventsService {
@@ -61,10 +63,11 @@ export class EventsService {
     let element = foundElement?.name;
 
     if (_.isNil(element)) {
-      const fetchedElement = await this.heliusService.getAssetById(
-        guess.element,
+      const fetchedElement = await ElementIDL.fetch(
+        this.heliusService.connection,
+        new PublicKey(guess.element),
       );
-      element = fetchedElement?.content?.metadata?.name || guess.element;
+      element = fetchedElement?.name || guess.element;
     }
 
     const event: ForgeEvent = {
