@@ -79,7 +79,9 @@ export class ForgeAttemptsService {
     }
 
     if (!_.isNil(guess)) {
-      return GuessModel.fromGuess(guessAddress, guess);
+      const g = GuessModel.fromGuess(guessAddress, guess);
+      console.log(`Guess ${guessAddress} contains recipe: ${g.recipe}`)
+      return g
     }
 
     if (depth >= 10) {
