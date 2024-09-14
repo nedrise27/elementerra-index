@@ -21,6 +21,7 @@ import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
 import { GuessModel } from './models/Guess.model';
+import { ReplayRecipesRequest } from './requests/ReplayRecipesRequest';
 
 @Injectable()
 export class AppService {
@@ -174,8 +175,8 @@ export class AppService {
     return this.elementsService.replay(limit, page);
   }
 
-  public async replayRecipes(): Promise<void> {
-    return this.recipesService.replay();
+  public async replayRecipes(request?: ReplayRecipesRequest): Promise<void> {
+    return this.recipesService.replay(request?.season);
   }
 
   private async handleTransaction(

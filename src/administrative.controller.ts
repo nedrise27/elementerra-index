@@ -14,6 +14,7 @@ import { ReplayResponse } from './responses/ReplayResponse';
 import { ConfigureEventsRequest } from './requests/ConfigureEventsRequest';
 import { ConfigureEventsResponse } from './responses/ConfigureEventsResponse';
 import { EventsService } from './events.service';
+import { ReplayRecipesRequest } from './requests/ReplayRecipesRequest';
 
 @ApiTags('Administrative')
 @Controller('')
@@ -77,10 +78,13 @@ export class AdministrativeController {
   }
 
   @Post('/replay/recipes')
-  public async replayRecipes(@Headers('Authorization') authHeader: string) {
+  public async replayRecipes(
+    @Headers('Authorization') authHeader: string,
+    @Body() request?: ReplayRecipesRequest,
+  ) {
     checkAuthHeader(authHeader);
 
-    return this.appService.replayRecipes();
+    return this.appService.replayRecipes(request);
   }
 
   @Post('/configure/events')

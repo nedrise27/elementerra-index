@@ -80,8 +80,8 @@ export class ForgeAttemptsService {
 
     if (!_.isNil(guess)) {
       const g = GuessModel.fromGuess(guessAddress, guess);
-      console.log(`Guess ${guessAddress} contains recipe: ${g.recipe}`)
-      return g
+      console.log(`Guess ${guessAddress} contains recipe: ${g.recipe}`);
+      return g;
     }
 
     if (depth >= 10) {
@@ -111,7 +111,11 @@ export class ForgeAttemptsService {
 
     const guessAddress = claimInstruction.accounts[12];
 
-    const guess = await this.pollGuess(guessAddress, 0);
+    let guess = await this.recipesService.getGuess(guessAddress);
+
+    if (_.isNil(guess)) {
+      guess = await this.pollGuess(guessAddress, 0);
+    }
 
     if (_.isNil(guess)) {
       console.error(

@@ -12,6 +12,7 @@ import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResp
 import { RecipeRequestLog } from './models/RecipeRequestLog';
 import { HeliusService } from './helius.service';
 import { PROGRAM_ID } from 'clients/elementerra-program/programId';
+import { GetProgramAccountsFilter } from '@solana/web3.js';
 
 @Injectable()
 export class RecipesService {
@@ -213,20 +214,34 @@ export class RecipesService {
     return unpacked;
   }
 
-  public async replay() {
+  public async replay(season?: number) {
+    const filters: GetProgramAccountsFilter[] = [
+      {
+        memcmp: {
+          offset: 0,
+          bytes: Guess.discriminator.toString('base64'),
+          encoding: 'base64',
+        },
+      },
+    ];
+
+    if (!_.isNil(season)) {
+      filters.push({
+        memcmp: {
+          offset: 9,
+          bytes: Buffer.from([season]).toString('base64'),
+          encoding: 'base64',
+        },
+      });
+    }
+
     const guesses = await this.heliusService.connection.getProgramAccounts(
       PROGRAM_ID,
-      {
-        filters: [
-          {
-            memcmp: {
-              offset: 0,
-              bytes: Guess.discriminator.toString('base64'),
-              encoding: 'base64',
-            },
-          },
-        ],
-      },
+      { filters },
+    );
+
+    console.log(
+      `Replaying ${guesses.length} Guesses from ${_.isNil(season) ? 'all seasons' : 'season ' + season}`,
     );
 
     for (const item of guesses) {
