@@ -107,7 +107,7 @@ export class ForgeAttemptsService {
       return;
     }
 
-    const guessAddress = claimInstruction.accounts[13];
+    const guessAddress = claimInstruction.accounts[12];
 
     const guess = await this.pollGuess(guessAddress, 0);
 
