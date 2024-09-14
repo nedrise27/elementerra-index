@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { EventsConfigurationModel } from './models/EventsConfiguration.model';
 import * as _ from 'lodash';
 import { Element } from './models/Element.model';
+import { HeliusService } from './helius.service';
 
 @Injectable()
 export class EventsService {
@@ -16,6 +17,7 @@ export class EventsService {
     private readonly eventsConfigurationModel: typeof EventsConfigurationModel,
     @InjectModel(Element)
     private readonly elementModel: typeof Element,
+    private readonly heliusService: HeliusService,
   ) {}
 
   public async configureEvents(
@@ -50,17 +52,26 @@ export class EventsService {
       where: { guesser: user },
     });
 
-    const element = await this.elementModel.findOne({
+    const foundElement = await this.elementModel.findOne({
       where: {
         id: guess.element,
       },
     });
 
+    let element = foundElement?.name;
+
+    if (_.isNil(element)) {
+      const fetchedElement = await this.heliusService.getAssetById(
+        guess.element,
+      );
+      element = fetchedElement?.content?.metadata?.name || guess.element;
+    }
+
     const event: ForgeEvent = {
       eventTopic,
       timestamp,
       user,
-      element: element?.name || guess.element,
+      element,
       isSuccess: guess.isSuccess,
       preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
       recipe: guess.recipe as [string, string, string, string],
