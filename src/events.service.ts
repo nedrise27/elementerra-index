@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EventTopics, ForgeEvent } from './lib/events';
 import { GuessModel } from './models/Guess.model';
-import { ELEMENTS_IDS } from './lib/elements';
 import { ConfigureEventsRequest } from './requests/ConfigureEventsRequest';
 import { ConfigureEventsResponse } from './responses/ConfigureEventsResponse';
 import { InjectModel } from '@nestjs/sequelize';
@@ -14,6 +13,7 @@ import {
 } from '../clients/elementerra-program/accounts';
 import { HeliusService } from './helius.service';
 import { PublicKey } from '@solana/web3.js';
+import { ELEMENTS_IDS } from './lib/elements';
 
 @Injectable()
 export class EventsService {
@@ -56,14 +56,9 @@ export class EventsService {
       where: { guesser },
     });
 
-    const foundElement = await this.elementModel.findOne({
-      where: {
-        id: guessModel.element,
-      },
-    });
+    let element: string | undefined = ELEMENTS_IDS[guessModel.element];
 
-    let element = foundElement?.name;
-    if (_.isNil(foundElement)) {
+    if (_.isNil(element)) {
       const fetchedElement = await ElementIDL.fetch(
         this.heliusService.connection,
         new PublicKey(guessModel.element),
