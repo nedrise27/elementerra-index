@@ -62,12 +62,18 @@ export class EventsService {
       },
     });
 
-    let element: string;
+    let element = foundElement?.name;
     if (_.isNil(foundElement)) {
+      const fetchedElement = await ElementIDL.fetch(
+        this.heliusService.connection,
+        new PublicKey(guessModel.element),
+      );
+      element = fetchedElement?.name;
+    }
+
+    if (_.isNil(element)) {
       console.error(`Could not find element by id ${guessModel.element}`);
       element = 'UNKOWN';
-    } else {
-      element = foundElement.name;
     }
 
     let eventTopic = EventTopics.forging;
