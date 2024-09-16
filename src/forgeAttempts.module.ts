@@ -11,8 +11,6 @@ import { RecipesModule } from './recipes.module';
 @Module({
   imports: [
     SequelizeModule.forFeature([TransactionHistory, ForgeAttempt, Element]),
-    ElementsModule,
-    HeliusModule,
     RecipesModule,
     EventsModule,
   ],

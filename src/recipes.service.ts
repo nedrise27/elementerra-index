@@ -12,7 +12,8 @@ import { GetAvailableRecipesResponse } from './responses/GetAvailableRecipesResp
 import { RecipeRequestLog } from './models/RecipeRequestLog';
 import { HeliusService } from './helius.service';
 import { PROGRAM_ID } from 'clients/elementerra-program/programId';
-import { GetProgramAccountsFilter } from '@solana/web3.js';
+import { GetProgramAccountsFilter, PublicKey } from '@solana/web3.js';
+import { asyncSleep } from './lib/util';
 
 @Injectable()
 export class RecipesService {
@@ -31,6 +32,38 @@ export class RecipesService {
     if (!_.isNil(foundGuess)) {
       return foundGuess;
     }
+  }
+
+  public async pollGuess(
+    guessAddress: string,
+    depth: number,
+  ): Promise<GuessModel | undefined> {
+    let guess: Guess | undefined;
+
+    await asyncSleep(_.random(100, 1000, false));
+
+    try {
+      guess = await Guess.fetch(
+        this.heliusService.connection,
+        new PublicKey(guessAddress),
+      );
+    } catch (err) {
+      console.error(`Error fetching guess ${guessAddress}`);
+    }
+
+    if (!_.isNil(guess)) {
+      const g = GuessModel.fromGuess(guessAddress, guess);
+      console.log(`Guess ${guessAddress} contains recipe: ${g.recipe}`);
+      return g;
+    }
+
+    if (depth >= 10) {
+      return;
+    }
+
+    await asyncSleep(2000);
+    console.log(`Trying to fetch guess ${guessAddress} ${depth} times`);
+    return this.pollGuess(guessAddress, depth + 1);
   }
 
   public async upsertGuess(guess: GuessModel) {

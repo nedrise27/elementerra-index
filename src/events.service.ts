@@ -14,15 +14,15 @@ import {
 import { HeliusService } from './helius.service';
 import { PublicKey } from '@solana/web3.js';
 import { cleanAndOrderRecipe, ELEMENTS_IDS } from './lib/elements';
+import { RecipesService } from './recipes.service';
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectModel(EventsConfigurationModel)
     private readonly eventsConfigurationModel: typeof EventsConfigurationModel,
-    @InjectModel(Element)
-    private readonly elementModel: typeof Element,
     private readonly heliusService: HeliusService,
+    private readonly recipesService: RecipesService,
   ) {}
 
   public async configureEvents(
@@ -71,13 +71,15 @@ export class EventsService {
       element = 'UNKOWN';
     }
 
-    const guess = await Guess.fetch(
-      this.heliusService.connection,
-      new PublicKey(guessModel.address),
-    );
+    const guess = await this.recipesService.pollGuess(guessModel.address, 0);
+
+    if (_.isNil(guess)) {
+      console.error(`Could not find guess account ${guessModel.address}`);
+      return;
+    }
 
     let eventTopic = EventTopics.forging;
-    if (guess.numberOfTimesTried.toNumber() === 1) {
+    if (guess.numberOfTimesTried === 1) {
       if (guess.isSuccess && guess.creator.toString() === guesser) {
         eventTopic = EventTopics.inventing;
       }
@@ -94,12 +96,7 @@ export class EventsService {
       element,
       isSuccess: guess.isSuccess,
       preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
-      recipe: cleanAndOrderRecipe([
-        guess.elementTried1Name,
-        guess.elementTried2Name,
-        guess.elementTried3Name,
-        guess.elementTried4Name,
-      ]) as [string, string, string, string],
+      recipe: guess.recipe as [string, string, string, string],
     };
 
     try {

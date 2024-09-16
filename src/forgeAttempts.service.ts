@@ -19,7 +19,6 @@ export class ForgeAttemptsService {
   constructor(
     @InjectModel(ForgeAttempt)
     private readonly forgeAttemptModel: typeof ForgeAttempt,
-    private readonly heliusService: HeliusService,
     private readonly recipesService: RecipesService,
     private readonly eventsService: EventsService,
   ) {}
@@ -61,38 +60,6 @@ export class ForgeAttemptsService {
     return foundForgeAttempts.map((f) => new ForgeAttemptResponse(f));
   }
 
-  public async pollGuess(
-    guessAddress: string,
-    depth: number,
-  ): Promise<GuessModel | undefined> {
-    let guess: Guess | undefined;
-
-    await asyncSleep(_.random(100, 1000, false));
-
-    try {
-      guess = await Guess.fetch(
-        this.heliusService.connection,
-        new PublicKey(guessAddress),
-      );
-    } catch (err) {
-      console.error(`Error fetching guess ${guessAddress}`);
-    }
-
-    if (!_.isNil(guess)) {
-      const g = GuessModel.fromGuess(guessAddress, guess);
-      console.log(`Guess ${guessAddress} contains recipe: ${g.recipe}`);
-      return g;
-    }
-
-    if (depth >= 10) {
-      return;
-    }
-
-    await asyncSleep(2000);
-    console.log(`Trying to fetch guess ${guessAddress} ${depth} times`);
-    return this.pollGuess(guessAddress, depth + 1);
-  }
-
   public async processTransaction(transactionHistory: TransactionHistory) {
     if (!transactionHistory.containsClaimInstruction) {
       return;
@@ -114,7 +81,7 @@ export class ForgeAttemptsService {
     let guess = await this.recipesService.getGuess(guessAddress);
 
     if (_.isNil(guess)) {
-      guess = await this.pollGuess(guessAddress, 0);
+      guess = await this.recipesService.pollGuess(guessAddress, 0);
     }
 
     if (_.isNil(guess)) {
