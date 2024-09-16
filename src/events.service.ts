@@ -62,26 +62,21 @@ export class EventsService {
       },
     });
 
-    let element;
+    let element: string;
     if (_.isNil(foundElement)) {
-      console.error(`Could not find element by id ${guessModel.element}.`);
+      console.error(`Could not find element by id ${guessModel.element}`);
       element = 'UNKOWN';
     } else {
       element = foundElement.name;
     }
 
-    const guess = await Guess.fetch(
-      this.heliusService.connection,
-      new PublicKey(guessModel.address),
-    );
-
     let eventTopic = EventTopics.forging;
-    if (guess.numberOfTimesTried.toNumber() === 1) {
-      if (guess.isSuccess && guess.creator.toString() === guesser) {
+    if (guessModel.numberOfTimesTried === 1) {
+      if (guessModel.isSuccess && guessModel.creator.toString() === guesser) {
         eventTopic = EventTopics.inventing;
       }
 
-      if (!guess.isSuccess) {
+      if (!guessModel.isSuccess) {
         eventTopic = EventTopics.inventionAttempt;
       }
     }
@@ -91,7 +86,7 @@ export class EventsService {
       timestamp,
       user: guesser,
       element,
-      isSuccess: guess.isSuccess,
+      isSuccess: guessModel.isSuccess,
       preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
       recipe: guessModel.recipe as [string, string, string, string],
     };
