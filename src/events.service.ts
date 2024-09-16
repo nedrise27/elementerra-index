@@ -62,6 +62,14 @@ export class EventsService {
       },
     });
 
+    let element;
+    if (_.isNil(foundElement)) {
+      console.error(`Could not find element by id ${guessModel.element}.`);
+      element = 'UNKOWN';
+    } else {
+      element = foundElement.name;
+    }
+
     const guess = await Guess.fetch(
       this.heliusService.connection,
       new PublicKey(guessModel.address),
@@ -77,8 +85,6 @@ export class EventsService {
         eventTopic = EventTopics.inventionAttempt;
       }
     }
-
-    let element = foundElement?.name || guessModel.element;
 
     const event: ForgeEvent = {
       eventTopic,
