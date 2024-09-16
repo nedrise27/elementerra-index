@@ -8,7 +8,10 @@ import { InjectModel } from '@nestjs/sequelize';
 import { EventsConfigurationModel } from './models/EventsConfiguration.model';
 import * as _ from 'lodash';
 import { Element } from './models/Element.model';
-import { Element as ElementIDL } from '../clients/elementerra-program/accounts';
+import {
+  Element as ElementIDL,
+  Guess,
+} from '../clients/elementerra-program/accounts';
 import { HeliusService } from './helius.service';
 import { PublicKey } from '@solana/web3.js';
 
@@ -45,51 +48,62 @@ export class EventsService {
   }
 
   public async sendForgeEvent(
-    eventTopic: EventTopics,
     timestamp: number,
-    user: string,
-    guess: GuessModel,
+    guesser: string,
+    guessModel: GuessModel,
   ) {
     const configuration = await this.eventsConfigurationModel.findOne({
-      where: { guesser: user },
+      where: { guesser },
     });
 
     const foundElement = await this.elementModel.findOne({
       where: {
-        id: guess.element,
+        id: guessModel.element,
       },
     });
 
-    let element = foundElement?.name;
+    const guess = await Guess.fetch(
+      this.heliusService.connection,
+      new PublicKey(guessModel.address),
+    );
 
-    if (_.isNil(element)) {
-      const fetchedElement = await ElementIDL.fetch(
-        this.heliusService.connection,
-        new PublicKey(guess.element),
-      );
-      element = fetchedElement?.name || guess.element;
+    let eventTopic = EventTopics.forging;
+    if (guess.numberOfTimesTried.toNumber() === 1) {
+      if (guess.isSuccess && guess.creator.toString() === guesser) {
+        eventTopic = EventTopics.inventing;
+      }
+
+      if (!guess.isSuccess) {
+        eventTopic = EventTopics.inventionAttempt;
+      }
     }
+
+    let element = foundElement?.name || guessModel.element;
 
     const event: ForgeEvent = {
       eventTopic,
       timestamp,
-      user,
+      user: guesser,
       element,
       isSuccess: guess.isSuccess,
       preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
-      recipe: guess.recipe as [string, string, string, string],
+      recipe: guessModel.recipe as [string, string, string, string],
     };
 
-    return fetch(
-      `${process.env.WEBSOCKET_API_URL.replace(/\/$/, '')}/send-event`,
-      {
-        method: 'POST',
-        headers: {
-          authorization: process.env.PAIN_TEXT_PASSWORD,
-          'content-type': 'application/json',
+    try {
+      await fetch(
+        `${process.env.WEBSOCKET_API_URL.replace(/\/$/, '')}/send-event`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: process.env.PAIN_TEXT_PASSWORD,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(event),
         },
-        body: JSON.stringify(event),
-      },
-    );
+      );
+    } catch (err) {
+      console.error(`Error while sending websocket event. Error: '${err}'`);
+    }
   }
 }

@@ -148,31 +148,14 @@ export class ForgeAttemptsService {
       guess: guess.recipe,
     });
 
-    let eventTopic = EventTopics.forging;
-    let user = transaction.feePayer;
-
-    if (guess.numberOfTimesTried === 1) {
-      if (guess.isSuccess) {
-        eventTopic = EventTopics.inventing;
-        user = guess.creator;
-      } else {
-        eventTopic = EventTopics.inventionAttempt;
-      }
-    }
-
     const thresholdTimestamp = new Date().getTime() / 1000 - 60;
 
     if (transaction.timestamp > thresholdTimestamp) {
-      try {
-        await this.eventsService.sendForgeEvent(
-          eventTopic,
-          transaction.timestamp,
-          user,
-          guess,
-        );
-      } catch (err) {
-        console.error(`Error while sending websocket event. Error: '${err}'`);
-      }
+      this.eventsService.sendForgeEvent(
+        transaction.timestamp,
+        transaction.feePayer,
+        guess,
+      );
     }
   }
 }
