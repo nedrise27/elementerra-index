@@ -13,7 +13,7 @@ import {
 } from '../clients/elementerra-program/accounts';
 import { HeliusService } from './helius.service';
 import { PublicKey } from '@solana/web3.js';
-import { ELEMENTS_IDS } from './lib/elements';
+import { cleanAndOrderRecipe, ELEMENTS_IDS } from './lib/elements';
 
 @Injectable()
 export class EventsService {
@@ -71,13 +71,18 @@ export class EventsService {
       element = 'UNKOWN';
     }
 
+    const guess = await Guess.fetch(
+      this.heliusService.connection,
+      new PublicKey(guessModel.address),
+    );
+
     let eventTopic = EventTopics.forging;
-    if (guessModel.numberOfTimesTried === 1) {
-      if (guessModel.isSuccess && guessModel.creator.toString() === guesser) {
+    if (guess.numberOfTimesTried.toNumber() === 1) {
+      if (guess.isSuccess && guess.creator.toString() === guesser) {
         eventTopic = EventTopics.inventing;
       }
 
-      if (!guessModel.isSuccess) {
+      if (!guess.isSuccess) {
         eventTopic = EventTopics.inventionAttempt;
       }
     }
@@ -87,9 +92,14 @@ export class EventsService {
       timestamp,
       user: guesser,
       element,
-      isSuccess: guessModel.isSuccess,
+      isSuccess: guess.isSuccess,
       preferHidden: !_.isNil(configuration) && !configuration.enableEvents,
-      recipe: guessModel.recipe as [string, string, string, string],
+      recipe: cleanAndOrderRecipe([
+        guess.elementTried1Name,
+        guess.elementTried2Name,
+        guess.elementTried3Name,
+        guess.elementTried4Name,
+      ]) as [string, string, string, string],
     };
 
     try {
