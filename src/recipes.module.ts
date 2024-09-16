@@ -6,9 +6,11 @@ import { Element, ForgeAttempt } from './models';
 import { GuessModel } from './models/Guess.model';
 import { RecipeRequestLog } from './models/RecipeRequestLog';
 import { HeliusModule } from './helius.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     SequelizeModule.forFeature([
       ForgeAttempt,
       Element,

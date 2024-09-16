@@ -14,6 +14,7 @@ import { HeliusService } from './helius.service';
 import { PROGRAM_ID } from 'clients/elementerra-program/programId';
 import { GetProgramAccountsFilter, PublicKey } from '@solana/web3.js';
 import { asyncSleep } from './lib/util';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class RecipesService {
@@ -247,6 +248,7 @@ export class RecipesService {
     return unpacked;
   }
 
+  @Cron(CronExpression.EVERY_HOUR)
   public async replay(season?: number) {
     const filters: GetProgramAccountsFilter[] = [
       {
@@ -294,7 +296,7 @@ export class RecipesService {
       });
 
       if (_.isNil(res)) {
-        console.log(recipe);
+        console.log(`Saving guess ${address} with recipe ${recipe}`);
         await this.guessModel.create({
           address,
           seasonNumber: guessIDL.seasonNumber,
