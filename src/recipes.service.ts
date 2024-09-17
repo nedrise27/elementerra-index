@@ -54,16 +54,19 @@ export class RecipesService {
 
     if (!_.isNil(guess)) {
       const g = GuessModel.fromGuess(guessAddress, guess);
-      console.log(`Guess ${guessAddress} contains recipe: ${g.recipe}`);
+      console.log(`Polled guess with recipe ${g.recipe} after ${depth} tries.`);
       return g;
     }
 
     if (depth >= 10) {
+      console.error(
+        `Could not fetch guess ${guessAddress} after ${depth} tries.`,
+      );
       return;
     }
 
     await asyncSleep(2000);
-    console.log(`Trying to fetch guess ${guessAddress} ${depth} times`);
+
     return this.pollGuess(guessAddress, depth + 1);
   }
 
@@ -249,6 +252,10 @@ export class RecipesService {
   }
 
   @Cron(CronExpression.EVERY_HOUR)
+  private async replayCurrentSeason() {
+    await this.replay(2);
+  }
+
   public async replay(season?: number) {
     const filters: GetProgramAccountsFilter[] = [
       {
