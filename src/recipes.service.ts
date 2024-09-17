@@ -54,7 +54,11 @@ export class RecipesService {
 
     if (!_.isNil(guess)) {
       const g = GuessModel.fromGuess(guessAddress, guess);
-      console.log(`Polled guess with recipe ${g.recipe} after ${depth} tries.`);
+      if (depth > 0) {
+        console.log(
+          `Polled guess with recipe ${g.recipe} after ${depth} tries.`,
+        );
+      }
       return g;
     }
 
