@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Connection, clusterApiUrl } from '@solana/web3.js';
-import { Helius } from 'helius-sdk';
+import { EnrichedTransaction, Helius } from 'helius-sdk';
 import * as _ from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { ParsedTransaction } from './dto/ParsedTransaction';
@@ -33,7 +33,7 @@ export class HeliusService {
     limit?: number,
     before?: string,
     type?: string,
-  ): Promise<ParsedTransaction[]> {
+  ): Promise<EnrichedTransaction[]> {
     const l = _.min([100, limit]);
     const url = `https://api.helius.xyz/v0/addresses/${owner}/transactions`;
     const params = {

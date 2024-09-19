@@ -22,6 +22,7 @@ import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
 import { GuessModel } from './models/Guess.model';
 import { ReplayRecipesRequest } from './requests/ReplayRecipesRequest';
+import { EnrichedTransaction } from 'helius-sdk';
 
 @Injectable()
 export class AppService {
@@ -59,7 +60,7 @@ export class AppService {
   }
 
   public async processTransactionHistory(
-    transactionHistory: ParsedTransaction[] | ParsedTransaction,
+    transactionHistory: EnrichedTransaction[] | EnrichedTransaction,
   ) {
     if (_.isArray(transactionHistory)) {
       for (const parsedTransaction of transactionHistory) {
@@ -180,7 +181,7 @@ export class AppService {
   }
 
   private async handleTransaction(
-    parsedTransaction: ParsedTransaction,
+    parsedTransaction: EnrichedTransaction,
   ): Promise<void> {
     const [transactionHistory] = await Promise.all([
       this.saveTransactionHistory(parsedTransaction),
@@ -196,7 +197,7 @@ export class AppService {
   }
 
   private async saveTransactionHistory(
-    parsedTransaction: ParsedTransaction,
+    parsedTransaction: EnrichedTransaction,
   ): Promise<TransactionHistoryModel | undefined> {
     const containsClaimInstruction = !_.isNil(
       parsedTransaction.instructions.find(

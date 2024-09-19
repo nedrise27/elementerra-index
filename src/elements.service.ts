@@ -6,6 +6,7 @@ import { HeliusService } from './helius.service';
 import { ELEMENTERRA_ELEMENTS_COLLECTION_ID } from './lib/constants';
 import { Element } from './models/Element.model';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
+import { CompressedNftEvent, EnrichedTransaction } from 'helius-sdk';
 
 @Injectable()
 export class ElementsService {
@@ -56,13 +57,13 @@ export class ElementsService {
   }
 
   public async processTransaction(
-    transaction: ParsedTransaction,
+    transaction: EnrichedTransaction,
   ): Promise<void> {
     if (!_.isNil(transaction.transactionError)) {
       return;
     }
 
-    const compressedNftEvents: CompressedEvent[] | undefined = _.get(
+    const compressedNftEvents: CompressedNftEvent[] | undefined = _.get(
       transaction.events,
       'compressed',
     );
