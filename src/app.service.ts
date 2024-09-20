@@ -2,27 +2,24 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { PublicKey } from '@solana/web3.js';
 import { Guess } from 'clients/elementerra-program/accounts';
+import { EnrichedTransaction } from 'helius-sdk';
 import * as _ from 'lodash';
 import { Op } from 'sequelize';
-import { ParsedTransaction } from './dto/ParsedTransaction';
 import { ElementsService } from './elements.service';
+import { EventsService } from './events.service';
 import { ForgeAttemptsService } from './forgeAttempts.service';
 import { HeliusService } from './helius.service';
-import {
-  ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX,
-  ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
-} from './lib/constants';
+import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
 import {
   ForgeAttempt,
   TransactionHistory as TransactionHistoryModel,
 } from './models';
+import { GuessModel } from './models/Guess.model';
 import { RecipesService } from './recipes.service';
+import { ReplayRecipesRequest } from './requests/ReplayRecipesRequest';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
 import { ReplayResponse } from './responses/ReplayResponse';
 import { StatsResponse } from './responses/StatsResponse';
-import { GuessModel } from './models/Guess.model';
-import { ReplayRecipesRequest } from './requests/ReplayRecipesRequest';
-import { EnrichedTransaction } from 'helius-sdk';
 
 @Injectable()
 export class AppService {
@@ -35,7 +32,31 @@ export class AppService {
     private readonly elementsService: ElementsService,
     private readonly recipesService: RecipesService,
     private readonly heliusService: HeliusService,
+    private readonly eventsService: EventsService,
   ) {}
+
+  public async processTransactionHistory(transactions: EnrichedTransaction[]) {
+    for (const tx of transactions) {
+      await this.handleTransaction(tx);
+    }
+  }
+
+  private async handleTransaction(tx: EnrichedTransaction): Promise<void> {
+    for (const ix of tx.instructions) {
+      if (ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA) {
+        const guessAddress = ix.accounts[12];
+        const guess = await this.recipesService.pollGuess(guessAddress, 0);
+        if (!_.isNil(guess)) {
+          this.recipesService.upsertGuess(guess);
+
+          const thresholdTimestamp = new Date().getTime() / 1000 - 60;
+          if (tx.timestamp > thresholdTimestamp) {
+            this.eventsService.sendForgeEvent(tx.timestamp, tx.feePayer, guess);
+          }
+        }
+      }
+    }
+  }
 
   public async stats(): Promise<StatsResponse> {
     const forgeAttemptCount = await this.forgeAttemptModel.count();
@@ -57,18 +78,6 @@ export class AppService {
     };
 
     return response;
-  }
-
-  public async processTransactionHistory(
-    transactionHistory: EnrichedTransaction[] | EnrichedTransaction,
-  ) {
-    if (_.isArray(transactionHistory)) {
-      for (const parsedTransaction of transactionHistory) {
-        await this.handleTransaction(parsedTransaction);
-      }
-    } else {
-      await this.handleTransaction(transactionHistory);
-    }
   }
 
   public async replay(
@@ -178,56 +187,5 @@ export class AppService {
 
   public async replayRecipes(request?: ReplayRecipesRequest): Promise<void> {
     return this.recipesService.replay(request?.season);
-  }
-
-  private async handleTransaction(
-    parsedTransaction: EnrichedTransaction,
-  ): Promise<void> {
-    const [transactionHistory] = await Promise.all([
-      this.saveTransactionHistory(parsedTransaction),
-      this.elementsService.processTransaction(parsedTransaction),
-    ]);
-
-    if (
-      !_.isNil(transactionHistory) &&
-      transactionHistory.containsClaimInstruction
-    ) {
-      this.forgeAttemptsService.processTransaction(transactionHistory);
-    }
-  }
-
-  private async saveTransactionHistory(
-    parsedTransaction: EnrichedTransaction,
-  ): Promise<TransactionHistoryModel | undefined> {
-    const containsClaimInstruction = !_.isNil(
-      parsedTransaction.instructions.find(
-        (ix) => ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA,
-      ),
-    );
-    const containsAddToPendingGuessInstruction = !_.isNil(
-      parsedTransaction.instructions.find((ix) =>
-        ix.data.startsWith(
-          ELEMENTERRA_PROGRAM_ADD_TO_PENDING_GUESS_DATA_PREFIX,
-        ),
-      ),
-    );
-    const transactionError = !_.isNil(parsedTransaction?.transactionError);
-
-    try {
-      const [transactionHistory] = await this.transactionHistoryModel.upsert({
-        tx: parsedTransaction.signature,
-        timestamp: parsedTransaction.timestamp,
-        slot: parsedTransaction.slot,
-        feePayer: parsedTransaction.feePayer,
-        containsClaimInstruction,
-        containsAddToPendingGuessInstruction,
-        transactionError,
-        data: parsedTransaction,
-      });
-
-      return transactionHistory;
-    } catch (err) {
-      console.error(`Error while saving transaction: ${err}`);
-    }
   }
 }

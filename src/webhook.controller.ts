@@ -1,10 +1,12 @@
 import { Body, Controller, Headers, Post } from '@nestjs/common';
 
 import { ApiTags } from '@nestjs/swagger';
+import { EnrichedTransaction } from 'helius-sdk';
 import { AppService } from './app.service';
-import { ParsedTransaction } from './dto/ParsedTransaction';
 import { checkAuthHeader } from './lib/auth';
-import { EnrichedTransaction, Webhook } from 'helius-sdk';
+import { Guess } from 'clients/elementerra-program/accounts';
+import _ from 'lodash';
+import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
 
 @ApiTags('Data')
 @Controller('helius-webhook')
@@ -17,7 +19,10 @@ export class WebhookController {
     @Body() transactionHistory: EnrichedTransaction | EnrichedTransaction[],
   ) {
     checkAuthHeader(authHeader);
-    console.log(JSON.stringify(transactionHistory));
-    await this.appService.processTransactionHistory(transactionHistory);
+    const transactions = _.isArray(transactionHistory)
+      ? transactionHistory
+      : [transactionHistory];
+
+    await this.appService.processTransactionHistory(transactions);
   }
 }

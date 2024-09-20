@@ -4,7 +4,6 @@ import { Connection, clusterApiUrl } from '@solana/web3.js';
 import { EnrichedTransaction, Helius } from 'helius-sdk';
 import * as _ from 'lodash';
 import { lastValueFrom } from 'rxjs';
-import { ParsedTransaction } from './dto/ParsedTransaction';
 
 @Injectable()
 export class HeliusService {

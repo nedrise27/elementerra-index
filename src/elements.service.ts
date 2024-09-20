@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { CompressedNftEvent, EnrichedTransaction } from 'helius-sdk';
 import * as _ from 'lodash';
-import { CompressedEvent, ParsedTransaction } from './dto/ParsedTransaction';
 import { HeliusService } from './helius.service';
 import { ELEMENTERRA_ELEMENTS_COLLECTION_ID } from './lib/constants';
 import { Element } from './models/Element.model';
 import { ReplayElementsResponse } from './responses/ReplayElementsResponse';
-import { CompressedNftEvent, EnrichedTransaction } from 'helius-sdk';
 
 @Injectable()
 export class ElementsService {
