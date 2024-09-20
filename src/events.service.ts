@@ -50,32 +50,25 @@ export class EventsService {
   public async sendForgeEvent(
     timestamp: number,
     guesser: string,
-    guessModel: GuessModel,
+    guess: GuessModel,
   ) {
     const configuration = await this.eventsConfigurationModel.findOne({
       where: { guesser },
     });
 
-    let element: string | undefined = ELEMENTS_IDS[guessModel.element];
+    let element: string | undefined = ELEMENTS_IDS[guess.element];
 
     if (_.isNil(element)) {
       const fetchedElement = await ElementIDL.fetch(
         this.heliusService.connection,
-        new PublicKey(guessModel.element),
+        new PublicKey(guess.element),
       );
       element = fetchedElement?.name;
     }
 
     if (_.isNil(element)) {
-      console.error(`Could not find element by id ${guessModel.element}`);
+      console.error(`Could not find element by id ${guess.element}`);
       element = 'UNKOWN';
-    }
-
-    const guess = await this.recipesService.pollGuess(guessModel.address, 0);
-
-    if (_.isNil(guess)) {
-      console.error(`Could not find guess account ${guessModel.address}`);
-      return;
     }
 
     let eventTopic = EventTopics.forging;
