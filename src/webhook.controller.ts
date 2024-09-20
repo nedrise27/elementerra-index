@@ -2,11 +2,9 @@ import { Body, Controller, Headers, Post } from '@nestjs/common';
 
 import { ApiTags } from '@nestjs/swagger';
 import { EnrichedTransaction } from 'helius-sdk';
+import * as _ from 'lodash';
 import { AppService } from './app.service';
 import { checkAuthHeader } from './lib/auth';
-import { Guess } from 'clients/elementerra-program/accounts';
-import _ from 'lodash';
-import { ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA } from './lib/constants';
 
 @ApiTags('Data')
 @Controller('helius-webhook')
