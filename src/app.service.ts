@@ -45,14 +45,17 @@ export class AppService {
     for (const ix of tx.instructions) {
       if (ix.data === ELEMENTERRA_PROGRAM_CLAIM_PENDING_GUESS_DATA) {
         const guessAddress = ix.accounts[12];
-        const guess = await this.recipesService.pollGuess(guessAddress, 0);
-        if (!_.isNil(guess)) {
-          this.recipesService.upsertGuess(guess);
-
-          const thresholdTimestamp = new Date().getTime() / 1000 - 60;
-          if (tx.timestamp > thresholdTimestamp) {
-            this.eventsService.sendForgeEvent(tx.timestamp, tx.feePayer, guess);
+        let guess = await this.recipesService.getGuess(guessAddress);
+        if (_.isNil(guess) || guess.numberOfTimesTried <= 1) {
+          guess = await this.recipesService.pollGuess(guessAddress, 0);
+          if (!_.isNil(guess)) {
+            this.recipesService.upsertGuess(guess);
           }
+        }
+
+        const thresholdTimestamp = new Date().getTime() / 1000 - 60;
+        if (!_.isNil(guess) && tx.timestamp > thresholdTimestamp) {
+          this.eventsService.sendForgeEvent(tx.timestamp, tx.feePayer, guess);
         }
       }
     }
