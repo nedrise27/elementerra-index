@@ -255,7 +255,7 @@ export class RecipesService {
     return unpacked;
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_12_HOURS)
   private async replayCurrentSeason() {
     await this.replay(2);
   }
