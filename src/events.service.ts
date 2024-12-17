@@ -59,11 +59,15 @@ export class EventsService {
     let element: string | undefined = ELEMENTS_IDS[guess.element];
 
     if (_.isNil(element)) {
-      const fetchedElement = await ElementIDL.fetch(
-        this.heliusService.connection,
-        new PublicKey(guess.element),
-      );
-      element = fetchedElement?.name;
+      try {
+        const fetchedElement = await ElementIDL.fetch(
+          this.heliusService.connection,
+          new PublicKey(guess.element),
+        );
+        element = fetchedElement?.name;
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     if (_.isNil(element)) {
